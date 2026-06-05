@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Macro Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a1a2e;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    header h1 { font-size: 1.25rem; font-weight: 600; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .date-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date-nav button {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .date-nav button:hover { background: rgba(255,255,255,0.25); }
+
+    #date-label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      min-width: 130px;
+      text-align: center;
+    }
+
+    .icon-btn {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.25); }
+    .icon-btn.red   { background: #e94560; }
+    .icon-btn.red:hover { background: #c73652; }
+    .icon-btn.green { background: #16a34a; }
+    .icon-btn.green:hover { background: #15803d; }
+
+    main {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* Progress cards */
+    .totals-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .total-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .total-card .value { font-size: 1.6rem; font-weight: 700; }
+    .total-card .goal-label { font-size: 0.72rem; color: #aaa; margin-top: 1px; }
+    .total-card .label {
+      font-size: 0.75rem; color: #888;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-top: 10px; margin-bottom: 6px;
+    }
+
+    .progress-bar-bg { background: #f0f0f0; border-radius: 99px; height: 6px; overflow: hidden; margin-top: 6px; }
+    .progress-bar-fill { height: 100%; border-radius: 99px; transition: width 0.3s ease; max-width: 100%; }
+
+    .total-card.calories .value             { color: #e94560; }
+    .total-card.calories .progress-bar-fill { background: #e94560; }
+    .total-card.protein  .value             { color: #2563eb; }
+    .total-card.protein  .progress-bar-fill { background: #2563eb; }
+    .total-card.carbs    .value             { color: #16a34a; }
+    .total-card.carbs    .progress-bar-fill { background: #16a34a; }
+    .progress-bar-fill.over { background: #f59e0b !important; }
+
+    /* Modals */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      width: 380px;
+      max-width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 20px; }
+
+    .modal .field { margin-bottom: 14px; }
+    .modal .field label { display: block; font-size: 0.78rem; color: #666; margin-bottom: 4px; }
+    .modal .field input {
+      width: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px;
+      padding: 9px 11px; font-size: 0.95rem; outline: none;
+    }
+    .modal .field input:focus { border-color: #1a1a2e; }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-save {
+      flex: 1; background: #1a1a2e; color: white; border: none;
+      border-radius: 8px; padding: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    }
+    .modal-save:hover { background: #2d2d4e; }
+    .modal-cancel {
+      flex: 1; background: #f0f0f0; color: #444; border: none;
+      border-radius: 8px; padding: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    }
+    .modal-cancel:hover { background: #e0e0e0; }
+
+    /* Foods modal wider */
+    #foods-modal .modal { width: 500px; }
+
+    .foods-modal-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 16px; }
+    .foods-modal-grid .field { margin-bottom: 0; }
+    .foods-modal-grid .field input { font-size: 0.85rem; padding: 8px 9px; }
+    .foods-modal-grid .field label { font-size: 0.72rem; }
+
+    .save-food-btn {
+      background: #1a1a2e; color: white; border: none;
+      border-radius: 8px; padding: 8px 14px; font-size: 0.85rem;
+      font-weight: 600; cursor: pointer; white-space: nowrap; height: 36px;
+    }
+    .save-food-btn:hover { background: #2d2d4e; }
+
+    .food-library-list { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; }
+
+    .food-library-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto auto;
+      align-items: center;
+      gap: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+
+    .food-library-item .fname { font-weight: 600; }
+    .food-library-item .fmac { color: #888; font-size: 0.78rem; text-align: right; }
+
+    .lib-edit-btn, .lib-del-btn {
+      background: none; border: none; cursor: pointer;
+      border-radius: 4px; padding: 3px 6px; font-size: 0.8rem;
+    }
+    .lib-edit-btn { color: #2563eb; }
+    .lib-edit-btn:hover { background: #eff6ff; }
+    .lib-del-btn { color: #e94560; }
+    .lib-del-btn:hover { background: #fff0f3; }
+
+    .no-foods { color: #aaa; font-size: 0.88rem; text-align: center; padding: 20px 0; }
+
+    /* Add form */
+    .add-form {
+      background: white; border-radius: 12px; padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 24px;
+    }
+    .add-form-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+    }
+    .add-form-header h2 {
+      font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #888;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .field label { display: block; font-size: 0.75rem; color: #666; margin-bottom: 4px; }
+    .field input {
+      width: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px;
+      padding: 9px 11px; font-size: 0.9rem; outline: none; transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: #1a1a2e; }
+
+    /* Combobox */
+    .combo-wrap { position: relative; }
+    .combo-input {
+      width: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px;
+      padding: 9px 32px 9px 11px; font-size: 0.9rem; outline: none;
+      transition: border-color 0.15s; background: white; cursor: pointer;
+    }
+    .combo-input:focus { border-color: #1a1a2e; }
+    .combo-arrow {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      pointer-events: none; color: #aaa; font-size: 0.75rem;
+    }
+    .combo-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: white;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+      z-index: 50;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .combo-dropdown.open { display: block; }
+    .combo-option {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .combo-option:hover, .combo-option.active { background: #f0f4ff; }
+    .combo-option .opt-name { font-weight: 500; flex: 1; }
+    .combo-option .opt-macs { font-size: 0.75rem; color: #aaa; white-space: nowrap; }
+    .combo-option.custom-opt { color: #2563eb; font-weight: 600; border-top: 1px solid #f0f0f0; }
+    .combo-option.no-match { color: #aaa; cursor: default; font-style: italic; }
+    .combo-option.no-match:hover { background: none; }
+
+    .add-btn {
+      background: #1a1a2e; color: white; border: none;
+      border-radius: 8px; padding: 9px 18px; font-size: 0.9rem;
+      font-weight: 600; cursor: pointer; white-space: nowrap; height: 38px;
+    }
+    .add-btn:hover { background: #2d2d4e; }
+
+    /* Entries */
+    .entries-section h2 {
+      font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin-bottom: 12px;
+    }
+    .empty-state {
+      background: white; border-radius: 12px; padding: 40px;
+      text-align: center; color: #aaa; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .entry-list { display: flex; flex-direction: column; gap: 8px; }
+    .entry {
+      background: white; border-radius: 10px; padding: 14px 16px;
+      display: grid; grid-template-columns: 1fr auto auto auto auto;
+      align-items: center; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .entry-desc { font-size: 0.95rem; font-weight: 500; }
+    .entry-macro { font-size: 0.85rem; text-align: right; min-width: 58px; }
+    .entry-macro span { display: block; font-size: 0.7rem; color: #aaa; }
+    .entry-macro.cal  { color: #e94560; }
+    .entry-macro.pro  { color: #2563eb; }
+    .entry-macro.carb { color: #16a34a; }
+    .delete-btn {
+      background: none; border: none; color: #ccc; cursor: pointer;
+      font-size: 1.1rem; padding: 2px 4px; border-radius: 4px; line-height: 1;
+    }
+    .delete-btn:hover { color: #e94560; background: #fff0f3; }
+
+    /* History */
+    .history-section { margin-top: 36px; }
+    .history-section h2 {
+      font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin-bottom: 12px;
+    }
+    .history-table { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #f8f9fa; }
+    th {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: #888; padding: 10px 16px; text-align: left;
+    }
+    th:not(:first-child) { text-align: right; }
+    td { padding: 11px 16px; font-size: 0.9rem; border-top: 1px solid #f0f0f0; }
+    td:not(:first-child) { text-align: right; }
+    tr.history-row { cursor: pointer; }
+    tr.history-row:hover td { background: #f8f9ff; }
+    td.cal-cell  { color: #e94560; font-weight: 600; }
+    td.pro-cell  { color: #2563eb; font-weight: 600; }
+    td.carb-cell { color: #16a34a; font-weight: 600; }
+    .no-history { padding: 30px; text-align: center; color: #aaa; font-size: 0.9rem; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1a1a2e; color: white; padding: 10px 20px;
+      border-radius: 8px; font-size: 0.875rem; font-weight: 500;
+      opacity: 0; transition: transform 0.25s ease, opacity 0.25s ease;
+      z-index: 200; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* Divider in foods list */
+    .lib-section-label {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+      color: #bbb; margin: 12px 0 6px;
+    }
+
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr 1fr; }
+      .form-row .field:first-child { grid-column: 1 / -1; }
+      .add-btn { grid-column: 1 / -1; }
+      .foods-modal-grid { grid-template-columns: 1fr 1fr; }
+      .foods-modal-grid .field:first-child { grid-column: 1 / -1; }
+      .save-food-btn { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Macro Tracker</h1>
+  <div class="header-right">
+    <div class="date-nav">
+      <button id="prev-day">&#8592;</button>
+      <span id="date-label"></span>
+      <button id="next-day">&#8594;</button>
+      <button class="icon-btn red" id="go-today">Today</button>
+    </div>
+    <button class="icon-btn" id="goals-btn">&#9881; Goals</button>
+    <button class="icon-btn" id="foods-btn">&#127859; My Foods</button>
+    <button class="icon-btn green" id="copy-btn">&#128203; Copy for Claude</button>
+  </div>
+</header>
+
+<!-- Goals modal -->
+<div class="modal-overlay" id="goals-modal">
+  <div class="modal">
+    <h2>Daily Goals</h2>
+    <div class="field"><label>Calorie Goal</label><input id="goal-cal" type="number" min="0" /></div>
+    <div class="field"><label>Protein Goal (g)</label><input id="goal-pro" type="number" min="0" /></div>
+    <div class="field"><label>Carbs Goal (g)</label><input id="goal-carb" type="number" min="0" /></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="goals-cancel">Cancel</button>
+      <button class="modal-save" id="goals-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- My Foods modal -->
+<div class="modal-overlay" id="foods-modal">
+  <div class="modal" style="width:500px">
+    <h2>My Foods</h2>
+    <p style="font-size:0.82rem;color:#888;margin-bottom:14px;">Add foods you eat regularly. They'll appear in the dropdown when logging.</p>
+    <div class="foods-modal-grid">
+      <div class="field"><label>Food Name</label><input id="fl-name" type="text" placeholder="e.g. Greek Yogurt" /></div>
+      <div class="field"><label>Calories</label><input id="fl-cal" type="number" min="0" placeholder="0" /></div>
+      <div class="field"><label>Protein (g)</label><input id="fl-pro" type="number" min="0" placeholder="0" /></div>
+      <div class="field"><label>Carbs (g)</label><input id="fl-carb" type="number" min="0" placeholder="0" /></div>
+      <button class="save-food-btn" id="fl-save-btn">Add</button>
+    </div>
+    <div class="lib-section-label">Saved Foods</div>
+    <div class="food-library-list" id="food-library-list"></div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="modal-save" id="foods-close">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<main>
+  <div class="totals-bar">
+    <div class="total-card calories">
+      <div class="value" id="total-cal">0</div>
+      <div class="goal-label" id="goal-label-cal"></div>
+      <div class="label">Calories</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar-cal" style="width:0%"></div></div>
+    </div>
+    <div class="total-card protein">
+      <div class="value" id="total-pro">0g</div>
+      <div class="goal-label" id="goal-label-pro"></div>
+      <div class="label">Protein</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar-pro" style="width:0%"></div></div>
+    </div>
+    <div class="total-card carbs">
+      <div class="value" id="total-carb">0g</div>
+      <div class="goal-label" id="goal-label-carb"></div>
+      <div class="label">Carbs</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar-carb" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="add-form">
+    <div class="add-form-header">
+      <h2>Add Food</h2>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Food</label>
+        <div class="combo-wrap">
+          <input class="combo-input" id="combo-input" type="text" placeholder="Search or type a food…" autocomplete="off" />
+          <span class="combo-arrow">▼</span>
+          <div class="combo-dropdown" id="combo-dropdown"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Calories</label>
+        <input id="inp-cal" type="number" min="0" placeholder="0" />
+      </div>
+      <div class="field">
+        <label>Protein (g)</label>
+        <input id="inp-pro" type="number" min="0" placeholder="0" />
+      </div>
+      <div class="field">
+        <label>Carbs (g)</label>
+        <input id="inp-carb" type="number" min="0" placeholder="0" />
+      </div>
+      <button class="add-btn" id="add-btn">Add</button>
+    </div>
+  </div>
+
+  <div class="entries-section">
+    <h2>Today's Log</h2>
+    <div id="entry-list"></div>
+  </div>
+
+  <div class="history-section">
+    <h2>History</h2>
+    <div class="history-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Items</th>
+          </tr>
+        </thead>
+        <tbody id="history-body"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+  const STORAGE_KEY   = 'macro_tracker_v1';
+  const GOALS_KEY     = 'macro_tracker_goals_v1';
+  const LIBRARY_KEY   = 'macro_tracker_library_v1';
+  const DEFAULT_GOALS = { cal: 2500, pro: 170, carb: 250 };
+
+  // ── Storage helpers ──────────────────────────────────────────────
+  const loadData    = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY))  || {}; } catch { return {}; } };
+  const saveData    = d  => localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+  const loadGoals   = () => { try { return JSON.parse(localStorage.getItem(GOALS_KEY))   || DEFAULT_GOALS; } catch { return DEFAULT_GOALS; } };
+  const saveGoals   = g  => localStorage.setItem(GOALS_KEY, JSON.stringify(g));
+  const loadLibrary = () => { try { return JSON.parse(localStorage.getItem(LIBRARY_KEY)) || []; } catch { return []; } };
+  const saveLibrary = l  => localStorage.setItem(LIBRARY_KEY, JSON.stringify(l));
+
+  // ── Date helpers ─────────────────────────────────────────────────
+  function dateKey(d) { return d.toISOString().slice(0,10); }
+
+  function formatDisplay(d) {
+    const today = dateKey(new Date());
+    const key = dateKey(d);
+    if (key === today) return 'Today';
+    const yest = new Date(); yest.setDate(yest.getDate()-1);
+    if (key === dateKey(yest)) return 'Yesterday';
+    return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+  }
+
+  function formatHistoryDate(key) {
+    const [y,m,day] = key.split('-').map(Number);
+    return new Date(y,m-1,day).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  let currentDate = new Date();
+  currentDate.setHours(0,0,0,0);
+
+  // ── Combo box ────────────────────────────────────────────────────
+  let comboOpen = false;
+  let customMode = false; // true when user typed something not in library
+
+  const comboInput    = document.getElementById('combo-input');
+  const comboDropdown = document.getElementById('combo-dropdown');
+
+  function buildDropdown(query) {
+    const lib = loadLibrary();
+    const q   = query.trim().toLowerCase();
+    const matches = q === ''
+      ? lib
+      : lib.filter(f => f.name.toLowerCase().includes(q));
+
+    comboDropdown.innerHTML = '';
+
+    if (matches.length === 0 && q !== '') {
+      const noMatch = document.createElement('div');
+      noMatch.className = 'combo-option no-match';
+      noMatch.textContent = 'No saved foods match — keep typing for custom entry';
+      comboDropdown.appendChild(noMatch);
+    }
+
+    matches.forEach(f => {
+      const opt = document.createElement('div');
+      opt.className = 'combo-option';
+      opt.innerHTML = `<span class="opt-name">${escHtml(f.name)}</span><span class="opt-macs">${f.cal} kcal · ${f.pro}g P · ${f.carb}g C</span>`;
+      opt.addEventListener('mousedown', e => {
+        e.preventDefault();
+        selectFood(f);
+      });
+      comboDropdown.appendChild(opt);
+    });
+
+    // Custom option always at the bottom
+    const customOpt = document.createElement('div');
+    customOpt.className = 'combo-option custom-opt';
+    customOpt.textContent = '✏️  Enter custom food…';
+    customOpt.addEventListener('mousedown', e => {
+      e.preventDefault();
+      enterCustomMode();
+    });
+    comboDropdown.appendChild(customOpt);
+
+    openDropdown();
+  }
+
+  function openDropdown()  { comboDropdown.classList.add('open');    comboOpen = true; }
+  function closeDropdown() { comboDropdown.classList.remove('open'); comboOpen = false; }
+
+  function selectFood(f) {
+    comboInput.value = f.name;
+    document.getElementById('inp-cal').value  = f.cal;
+    document.getElementById('inp-pro').value  = f.pro;
+    document.getElementById('inp-carb').value = f.carb;
+    customMode = false;
+    closeDropdown();
+    document.getElementById('inp-cal').focus();
+  }
+
+  function enterCustomMode() {
+    comboInput.value = '';
+    comboInput.placeholder = 'Type food description…';
+    document.getElementById('inp-cal').value  = '';
+    document.getElementById('inp-pro').value  = '';
+    document.getElementById('inp-carb').value = '';
+    customMode = true;
+    closeDropdown();
+    comboInput.focus();
+  }
+
+  comboInput.addEventListener('focus', () => buildDropdown(comboInput.value));
+  comboInput.addEventListener('input', () => { customMode = true; buildDropdown(comboInput.value); });
+  comboInput.addEventListener('blur',  () => setTimeout(closeDropdown, 150));
+
+  comboInput.addEventListener('click', () => {
+    if (!comboOpen) buildDropdown(comboInput.value);
+  });
+
+  // ── Progress bars ─────────────────────────────────────────────────
+  function setBar(id, value, goal) {
+    const el  = document.getElementById(id);
+    const pct = goal > 0 ? Math.min((value/goal)*100, 100) : 0;
+    el.style.width = pct + '%';
+    el.classList.toggle('over', value > goal && goal > 0);
+  }
+
+  // ── Main render ───────────────────────────────────────────────────
+  function render() {
+    const data    = loadData();
+    const goals   = loadGoals();
+    const key     = dateKey(currentDate);
+    const entries = data[key] || [];
+
+    document.getElementById('date-label').textContent = formatDisplay(currentDate);
+
+    const totals = entries.reduce((acc,e) => {
+      acc.cal  += e.cal  || 0;
+      acc.pro  += e.pro  || 0;
+      acc.carb += e.carb || 0;
+      return acc;
+    }, { cal:0, pro:0, carb:0 });
+
+    document.getElementById('total-cal').textContent  = totals.cal;
+    document.getElementById('total-pro').textContent  = totals.pro + 'g';
+    document.getElementById('total-carb').textContent = totals.carb + 'g';
+
+    document.getElementById('goal-label-cal').textContent  = `of ${goals.cal} kcal`;
+    document.getElementById('goal-label-pro').textContent  = `of ${goals.pro}g`;
+    document.getElementById('goal-label-carb').textContent = `of ${goals.carb}g`;
+
+    setBar('bar-cal',  totals.cal,  goals.cal);
+    setBar('bar-pro',  totals.pro,  goals.pro);
+    setBar('bar-carb', totals.carb, goals.carb);
+
+    const list = document.getElementById('entry-list');
+    if (entries.length === 0) {
+      list.innerHTML = '<div class="empty-state">No food logged yet. Add something above!</div>';
+    } else {
+      list.innerHTML = '<div class="entry-list">' +
+        entries.map((e,i) => `
+          <div class="entry">
+            <div class="entry-desc">${escHtml(e.desc)}</div>
+            <div class="entry-macro cal">${e.cal}<span>kcal</span></div>
+            <div class="entry-macro pro">${e.pro}g<span>protein</span></div>
+            <div class="entry-macro carb">${e.carb}g<span>carbs</span></div>
+            <button class="delete-btn" data-index="${i}" title="Remove">&#x2715;</button>
+          </div>`).join('') +
+        '</div>';
+      list.querySelectorAll('.delete-btn').forEach(btn =>
+        btn.addEventListener('click', () => deleteEntry(key, parseInt(btn.dataset.index)))
+      );
+    }
+
+    renderHistory(data, key, goals);
+  }
+
+  function renderHistory(data, currentKey, goals) {
+    const body = document.getElementById('history-body');
+    const keys = Object.keys(data)
+      .filter(k => (data[k]||[]).length > 0)
+      .sort((a,b) => b.localeCompare(a));
+
+    if (keys.length === 0) {
+      body.innerHTML = '<tr><td colspan="5" class="no-history">No history yet — start logging!</td></tr>';
+      return;
+    }
+
+    body.innerHTML = keys.map(k => {
+      const t = (data[k]||[]).reduce((acc,e) => {
+        acc.cal  += e.cal  || 0;
+        acc.pro  += e.pro  || 0;
+        acc.carb += e.carb || 0;
+        return acc;
+      }, { cal:0, pro:0, carb:0 });
+
+      const pct = (v, g) => g > 0 ? `<span style="font-size:.7rem;color:#aaa;margin-left:3px">(${Math.round(v/g*100)}%)</span>` : '';
+      const active = k === currentKey ? ' style="background:#f0f4ff"' : '';
+      return `<tr class="history-row" data-key="${k}"${active}>
+        <td>${formatHistoryDate(k)}</td>
+        <td class="cal-cell">${t.cal}${pct(t.cal,goals.cal)}</td>
+        <td class="pro-cell">${t.pro}g${pct(t.pro,goals.pro)}</td>
+        <td class="carb-cell">${t.carb}g${pct(t.carb,goals.carb)}</td>
+        <td>${(data[k]||[]).length}</td>
+      </tr>`;
+    }).join('');
+
+    body.querySelectorAll('.history-row').forEach(row =>
+      row.addEventListener('click', () => {
+        const [y,m,d] = row.dataset.key.split('-').map(Number);
+        currentDate = new Date(y,m-1,d);
+        render();
+        window.scrollTo({ top:0, behavior:'smooth' });
+      })
+    );
+  }
+
+  function deleteEntry(key, index) {
+    const data = loadData();
+    data[key].splice(index, 1);
+    if (data[key].length === 0) delete data[key];
+    saveData(data);
+    render();
+  }
+
+  function addEntry() {
+    const desc = comboInput.value.trim();
+    const cal  = parseInt(document.getElementById('inp-cal').value)  || 0;
+    const pro  = parseInt(document.getElementById('inp-pro').value)  || 0;
+    const carb = parseInt(document.getElementById('inp-carb').value) || 0;
+
+    if (!desc) { comboInput.focus(); return; }
+
+    const data = loadData();
+    const key  = dateKey(currentDate);
+    if (!data[key]) data[key] = [];
+    data[key].push({ desc, cal, pro, carb });
+    saveData(data);
+
+    comboInput.value = '';
+    comboInput.placeholder = 'Search or type a food…';
+    document.getElementById('inp-cal').value  = '';
+    document.getElementById('inp-pro').value  = '';
+    document.getElementById('inp-carb').value = '';
+    customMode = false;
+    comboInput.focus();
+    render();
+  }
+
+  // ── Food Library modal ─────────────────────────────────────────────
+  let editingFoodIndex = null;
+
+  function renderFoodLibrary() {
+    const lib  = loadLibrary();
+    const list = document.getElementById('food-library-list');
+
+    if (lib.length === 0) {
+      list.innerHTML = '<div class="no-foods">No saved foods yet. Add one above!</div>';
+      return;
+    }
+
+    list.innerHTML = lib.map((f,i) => `
+      <div class="food-library-item">
+        <span class="fname">${escHtml(f.name)}</span>
+        <span class="fmac">${f.cal} kcal</span>
+        <span class="fmac">${f.pro}g P</span>
+        <span class="fmac">${f.carb}g C</span>
+        <span>
+          <button class="lib-edit-btn" data-i="${i}">Edit</button>
+          <button class="lib-del-btn"  data-i="${i}">✕</button>
+        </span>
+      </div>`).join('');
+
+    list.querySelectorAll('.lib-edit-btn').forEach(btn =>
+      btn.addEventListener('click', () => {
+        const f = lib[parseInt(btn.dataset.i)];
+        editingFoodIndex = parseInt(btn.dataset.i);
+        document.getElementById('fl-name').value = f.name;
+        document.getElementById('fl-cal').value  = f.cal;
+        document.getElementById('fl-pro').value  = f.pro;
+        document.getElementById('fl-carb').value = f.carb;
+        document.getElementById('fl-save-btn').textContent = 'Update';
+        document.getElementById('fl-name').focus();
+      })
+    );
+
+    list.querySelectorAll('.lib-del-btn').forEach(btn =>
+      btn.addEventListener('click', () => {
+        const lib2 = loadLibrary();
+        lib2.splice(parseInt(btn.dataset.i), 1);
+        saveLibrary(lib2);
+        renderFoodLibrary();
+        showToast('Food removed.');
+      })
+    );
+  }
+
+  document.getElementById('fl-save-btn').addEventListener('click', () => {
+    const name = document.getElementById('fl-name').value.trim();
+    const cal  = parseInt(document.getElementById('fl-cal').value)  || 0;
+    const pro  = parseInt(document.getElementById('fl-pro').value)  || 0;
+    const carb = parseInt(document.getElementById('fl-carb').value) || 0;
+    if (!name) { document.getElementById('fl-name').focus(); return; }
+
+    const lib = loadLibrary();
+    if (editingFoodIndex !== null) {
+      lib[editingFoodIndex] = { name, cal, pro, carb };
+      editingFoodIndex = null;
+      document.getElementById('fl-save-btn').textContent = 'Add';
+      showToast('Food updated.');
+    } else {
+      if (lib.some(f => f.name.toLowerCase() === name.toLowerCase())) {
+        showToast('A food with that name already exists.');
+        return;
+      }
+      lib.push({ name, cal, pro, carb });
+      showToast(`"${name}" saved.`);
+    }
+    saveLibrary(lib);
+    document.getElementById('fl-name').value = '';
+    document.getElementById('fl-cal').value  = '';
+    document.getElementById('fl-pro').value  = '';
+    document.getElementById('fl-carb').value = '';
+    renderFoodLibrary();
+  });
+
+  ['fl-name','fl-cal','fl-pro','fl-carb'].forEach(id =>
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('fl-save-btn').click();
+    })
+  );
+
+  document.getElementById('foods-btn').addEventListener('click', () => {
+    editingFoodIndex = null;
+    document.getElementById('fl-save-btn').textContent = 'Add';
+    renderFoodLibrary();
+    document.getElementById('foods-modal').classList.add('open');
+  });
+
+  document.getElementById('foods-close').addEventListener('click', () =>
+    document.getElementById('foods-modal').classList.remove('open')
+  );
+
+  document.getElementById('foods-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('foods-modal'))
+      document.getElementById('foods-modal').classList.remove('open');
+  });
+
+  // ── Goals modal ────────────────────────────────────────────────────
+  document.getElementById('goals-btn').addEventListener('click', () => {
+    const g = loadGoals();
+    document.getElementById('goal-cal').value  = g.cal;
+    document.getElementById('goal-pro').value  = g.pro;
+    document.getElementById('goal-carb').value = g.carb;
+    document.getElementById('goals-modal').classList.add('open');
+  });
+
+  document.getElementById('goals-cancel').addEventListener('click', () =>
+    document.getElementById('goals-modal').classList.remove('open')
+  );
+
+  document.getElementById('goals-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('goals-modal'))
+      document.getElementById('goals-modal').classList.remove('open');
+  });
+
+  document.getElementById('goals-save').addEventListener('click', () => {
+    saveGoals({
+      cal:  parseInt(document.getElementById('goal-cal').value)  || DEFAULT_GOALS.cal,
+      pro:  parseInt(document.getElementById('goal-pro').value)  || DEFAULT_GOALS.pro,
+      carb: parseInt(document.getElementById('goal-carb').value) || DEFAULT_GOALS.carb,
+    });
+    document.getElementById('goals-modal').classList.remove('open');
+    render();
+    showToast('Goals saved!');
+  });
+
+  // ── Copy for Claude ────────────────────────────────────────────────
+  document.getElementById('copy-btn').addEventListener('click', () => {
+    const data  = loadData();
+    const goals = loadGoals();
+    const keys  = Object.keys(data).filter(k => (data[k]||[]).length > 0).sort();
+
+    if (keys.length === 0) { showToast('No data to copy yet.'); return; }
+
+    const lines = ['# Macro Tracker Data', '',
+      `Daily Goals: ${goals.cal} kcal | ${goals.pro}g protein | ${goals.carb}g carbs`, ''];
+
+    keys.forEach(k => {
+      const entries = data[k] || [];
+      const t = entries.reduce((acc,e) => { acc.cal+=e.cal||0; acc.pro+=e.pro||0; acc.carb+=e.carb||0; return acc; }, {cal:0,pro:0,carb:0});
+      const pct = (v,g) => g > 0 ? ` (${Math.round(v/g*100)}% of goal)` : '';
+      lines.push(`## ${formatHistoryDate(k)}`);
+      lines.push(`Totals: ${t.cal} kcal${pct(t.cal,goals.cal)} | ${t.pro}g protein${pct(t.pro,goals.pro)} | ${t.carb}g carbs${pct(t.carb,goals.carb)}`);
+      entries.forEach(e => lines.push(`  - ${e.desc}: ${e.cal} kcal, ${e.pro}g protein, ${e.carb}g carbs`));
+      lines.push('');
+    });
+
+    navigator.clipboard.writeText(lines.join('\n'))
+      .then(() => showToast('Copied! Paste into Claude.'))
+      .catch(() => showToast('Copy failed — try a different browser.'));
+  });
+
+  // ── Misc events ───────────────────────────────────────────────────
+  document.getElementById('add-btn').addEventListener('click', addEntry);
+
+  ['inp-carb','inp-cal','inp-pro'].forEach(id =>
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') addEntry(); })
+  );
+
+  document.getElementById('prev-day').addEventListener('click', () => { currentDate.setDate(currentDate.getDate()-1); render(); });
+  document.getElementById('next-day').addEventListener('click', () => { currentDate.setDate(currentDate.getDate()+1); render(); });
+  document.getElementById('go-today').addEventListener('click', () => { currentDate = new Date(); currentDate.setHours(0,0,0,0); render(); });
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  render();
+</script>
+</body>
+</html>
