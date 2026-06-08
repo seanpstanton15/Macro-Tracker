@@ -7,117 +7,78 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f0f2f5;
-      color: #1a1a2e;
-      min-height: 100vh;
+    /* ── Login / Set-password screens ── */
+    #login-screen, #set-password-screen {
+      min-height: 100vh; display: none;
+      align-items: center; justify-content: center; padding: 24px;
     }
-
-    /* Login */
-    #login-screen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-
     .login-card {
-      background: white;
-      border-radius: 16px;
-      padding: 40px 36px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
-      text-align: center;
+      background: white; border-radius: 16px; padding: 40px 36px;
+      width: 100%; max-width: 380px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1); text-align: center;
     }
-
     .login-card h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; }
     .login-card p  { color: #888; font-size: 0.9rem; margin-bottom: 24px; line-height: 1.5; }
-
     .login-card input {
       width: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px;
       padding: 11px 14px; font-size: 0.95rem; outline: none; margin-bottom: 12px;
     }
     .login-card input:focus { border-color: #1a1a2e; }
-
-    .login-card button {
+    .login-card .primary-btn {
       width: 100%; background: #1a1a2e; color: white; border: none;
       border-radius: 8px; padding: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
     }
-    .login-card button:hover    { background: #2d2d4e; }
-    .login-card button:disabled { background: #aaa; cursor: not-allowed; }
+    .login-card .primary-btn:hover    { background: #2d2d4e; }
+    .login-card .primary-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .login-card .secondary-btn {
+      width: 100%; background: white; color: #1a1a2e;
+      border: 1.5px solid #e5e7eb; border-radius: 8px;
+      padding: 11px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 10px;
+    }
+    .login-card .secondary-btn:hover { background: #f8f9fa; }
+    .login-divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: #ccc; font-size: 0.8rem; }
+    .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
+    #login-msg, #set-password-msg { margin-top: 14px; font-size: 0.88rem; color: #16a34a; min-height: 20px; }
+    #login-msg.error, #set-password-msg.error { color: #e94560; }
 
-    #login-msg { margin-top: 14px; font-size: 0.88rem; color: #16a34a; min-height: 20px; }
-    #login-msg.error { color: #e94560; }
-
-    /* Loading */
+    /* ── Loading ── */
     .loading-overlay {
       display: none; position: fixed; inset: 0;
       background: rgba(255,255,255,0.85); z-index: 300;
-      align-items: center; justify-content: center;
-      font-size: 1rem; color: #888; gap: 10px;
+      align-items: center; justify-content: center; font-size: 1rem; color: #888; gap: 10px;
     }
     .loading-overlay.show { display: flex; }
-
-    .spinner {
-      width: 22px; height: 22px;
-      border: 3px solid #e5e7eb; border-top-color: #1a1a2e;
-      border-radius: 50%; animation: spin 0.7s linear infinite;
-    }
+    .spinner { width: 22px; height: 22px; border: 3px solid #e5e7eb; border-top-color: #1a1a2e; border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Header */
-    header {
-      background: #1a1a2e; color: white;
-      padding: 16px 24px;
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 12px; flex-wrap: wrap;
-    }
+    /* ── Header ── */
+    header { background: #1a1a2e; color: white; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     header h1 { font-size: 1.25rem; font-weight: 600; }
-
     .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
     .date-nav { display: flex; align-items: center; gap: 8px; }
-    .date-nav button {
-      background: rgba(255,255,255,0.15); border: none; color: white;
-      width: 32px; height: 32px; border-radius: 6px; cursor: pointer;
-      font-size: 1rem; display: flex; align-items: center; justify-content: center;
-    }
+    .date-nav button { background: rgba(255,255,255,0.15); border: none; color: white; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
     .date-nav button:hover { background: rgba(255,255,255,0.25); }
-
     #date-label { font-size: 0.95rem; font-weight: 500; min-width: 130px; text-align: center; }
-
-    .icon-btn {
-      background: rgba(255,255,255,0.15); border: none; color: white;
-      height: 32px; border-radius: 6px; cursor: pointer;
-      font-size: 0.8rem; padding: 0 12px; font-weight: 600;
-      display: flex; align-items: center; gap: 5px; white-space: nowrap;
-    }
-    .icon-btn:hover  { background: rgba(255,255,255,0.25); }
-    .icon-btn.red    { background: #e94560; }
+    .icon-btn { background: rgba(255,255,255,0.15); border: none; color: white; height: 32px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; padding: 0 12px; font-weight: 600; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .icon-btn:hover       { background: rgba(255,255,255,0.25); }
+    .icon-btn.red         { background: #e94560; }
     .icon-btn.red:hover   { background: #c73652; }
-    .icon-btn.green  { background: #16a34a; }
+    .icon-btn.green       { background: #16a34a; }
     .icon-btn.green:hover { background: #15803d; }
 
+    /* ── Main ── */
     main { max-width: 700px; margin: 0 auto; padding: 24px 16px; }
 
-    /* Totals */
+    /* ── Totals ── */
     .totals-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-
-    .total-card {
-      background: white; border-radius: 12px; padding: 16px;
-      text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    }
+    .total-card { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
     .total-card .value      { font-size: 1.6rem; font-weight: 700; }
     .total-card .goal-label { font-size: 0.72rem; color: #aaa; margin-top: 1px; }
     .total-card .label      { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 10px; margin-bottom: 6px; }
-
     .progress-bar-bg   { background: #f0f0f0; border-radius: 99px; height: 6px; overflow: hidden; margin-top: 6px; }
     .progress-bar-fill { height: 100%; border-radius: 99px; transition: width 0.3s ease; max-width: 100%; }
-
     .total-card.calories .value             { color: #e94560; }
     .total-card.calories .progress-bar-fill { background: #e94560; }
     .total-card.protein  .value             { color: #2563eb; }
@@ -126,92 +87,51 @@
     .total-card.carbs    .progress-bar-fill { background: #16a34a; }
     .progress-bar-fill.over { background: #f59e0b !important; }
 
-    /* Modals */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.45); z-index: 100;
-      align-items: center; justify-content: center; padding: 16px;
-    }
+    /* ── Modals ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
     .modal-overlay.open { display: flex; }
-
-    .modal {
-      background: white; border-radius: 16px; padding: 28px;
-      width: 380px; max-width: 100%;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-      max-height: 90vh; overflow-y: auto;
-    }
+    .modal { background: white; border-radius: 16px; padding: 28px; width: 380px; max-width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.18); max-height: 90vh; overflow-y: auto; }
     .modal h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 20px; }
     .modal .field { margin-bottom: 14px; }
     .modal .field label { display: block; font-size: 0.78rem; color: #666; margin-bottom: 4px; }
-    .modal .field input {
-      width: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px;
-      padding: 9px 11px; font-size: 0.95rem; outline: none;
-    }
+    .modal .field input { width: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 9px 11px; font-size: 0.95rem; outline: none; }
     .modal .field input:focus { border-color: #1a1a2e; }
-
     .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
     .modal-save   { flex: 1; background: #1a1a2e; color: white; border: none; border-radius: 8px; padding: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
     .modal-save:hover   { background: #2d2d4e; }
     .modal-cancel { flex: 1; background: #f0f0f0; color: #444; border: none; border-radius: 8px; padding: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
     .modal-cancel:hover { background: #e0e0e0; }
+    .modal-msg { font-size: 0.85rem; color: #e94560; min-height: 18px; margin-top: 8px; }
 
-    /* Foods modal */
+    /* ── Foods modal ── */
     .foods-modal-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 16px; }
     .foods-modal-grid .field { margin-bottom: 0; }
     .foods-modal-grid .field input { font-size: 0.85rem; padding: 8px 9px; }
     .foods-modal-grid .field label { font-size: 0.72rem; }
-
-    .save-food-btn {
-      background: #1a1a2e; color: white; border: none;
-      border-radius: 8px; padding: 8px 14px; font-size: 0.85rem;
-      font-weight: 600; cursor: pointer; white-space: nowrap; height: 36px;
-    }
+    .save-food-btn { background: #1a1a2e; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; height: 36px; }
     .save-food-btn:hover { background: #2d2d4e; }
-
     .food-library-list { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; }
-
-    .food-library-item {
-      display: grid; grid-template-columns: 1fr auto auto auto auto;
-      align-items: center; gap: 10px;
-      background: #f8f9fa; border-radius: 8px; padding: 10px 12px; font-size: 0.85rem;
-    }
+    .food-library-item { display: grid; grid-template-columns: 1fr auto auto auto auto; align-items: center; gap: 10px; background: #f8f9fa; border-radius: 8px; padding: 10px 12px; font-size: 0.85rem; }
     .food-library-item .fname { font-weight: 600; }
     .food-library-item .fmac  { color: #888; font-size: 0.78rem; text-align: right; }
-
     .lib-edit-btn, .lib-del-btn { background: none; border: none; cursor: pointer; border-radius: 4px; padding: 3px 6px; font-size: 0.8rem; }
-    .lib-edit-btn { color: #2563eb; }
-    .lib-edit-btn:hover { background: #eff6ff; }
-    .lib-del-btn  { color: #e94560; }
-    .lib-del-btn:hover  { background: #fff0f3; }
-
+    .lib-edit-btn { color: #2563eb; } .lib-edit-btn:hover { background: #eff6ff; }
+    .lib-del-btn  { color: #e94560; } .lib-del-btn:hover  { background: #fff0f3; }
     .no-foods { color: #aaa; font-size: 0.88rem; text-align: center; padding: 20px 0; }
     .lib-section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: #bbb; margin: 12px 0 6px; }
 
-    /* Add form */
+    /* ── Add form ── */
     .add-form { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 24px; }
     .add-form h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin-bottom: 14px; }
-
     .form-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
-
     .field label { display: block; font-size: 0.75rem; color: #666; margin-bottom: 4px; }
     .field input { width: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 9px 11px; font-size: 0.9rem; outline: none; transition: border-color 0.15s; }
     .field input:focus { border-color: #1a1a2e; }
-
-    /* Combobox */
     .combo-wrap { position: relative; }
-    .combo-input {
-      width: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px;
-      padding: 9px 32px 9px 11px; font-size: 0.9rem; outline: none;
-      transition: border-color 0.15s; background: white;
-    }
+    .combo-input { width: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 9px 32px 9px 11px; font-size: 0.9rem; outline: none; transition: border-color 0.15s; background: white; }
     .combo-input:focus { border-color: #1a1a2e; }
     .combo-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 0.75rem; }
-
-    .combo-dropdown {
-      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-      background: white; border: 1.5px solid #e5e7eb; border-radius: 10px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.12); z-index: 50; max-height: 240px; overflow-y: auto;
-    }
+    .combo-dropdown { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 1.5px solid #e5e7eb; border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); z-index: 50; max-height: 240px; overflow-y: auto; }
     .combo-dropdown.open { display: block; }
     .combo-option { padding: 10px 14px; cursor: pointer; font-size: 0.88rem; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     .combo-option:hover { background: #f0f4ff; }
@@ -220,14 +140,12 @@
     .combo-option.custom-opt { color: #2563eb; font-weight: 600; border-top: 1px solid #f0f0f0; }
     .combo-option.no-match   { color: #aaa; cursor: default; font-style: italic; }
     .combo-option.no-match:hover { background: none; }
-
     .add-btn { background: #1a1a2e; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 0.9rem; font-weight: 600; cursor: pointer; white-space: nowrap; height: 38px; }
     .add-btn:hover { background: #2d2d4e; }
 
-    /* Entries */
+    /* ── Entries ── */
     .entries-section h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin-bottom: 12px; }
     .empty-state { background: white; border-radius: 12px; padding: 40px; text-align: center; color: #aaa; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-
     .entry-list { display: flex; flex-direction: column; gap: 8px; }
     .entry { background: white; border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: 1fr auto auto auto auto; align-items: center; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
     .entry-desc { font-size: 0.95rem; font-weight: 500; }
@@ -239,7 +157,7 @@
     .delete-btn { background: none; border: none; color: #ccc; cursor: pointer; font-size: 1.1rem; padding: 2px 4px; border-radius: 4px; line-height: 1; }
     .delete-btn:hover { color: #e94560; background: #fff0f3; }
 
-    /* History */
+    /* ── History ── */
     .history-section { margin-top: 36px; }
     .history-section h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin-bottom: 12px; }
     .history-table { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
@@ -256,15 +174,8 @@
     td.carb-cell { color: #16a34a; font-weight: 600; }
     .no-history  { padding: 30px; text-align: center; color: #aaa; font-size: 0.9rem; }
 
-    /* Toast */
-    .toast {
-      position: fixed; bottom: 24px; left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: #1a1a2e; color: white; padding: 10px 20px;
-      border-radius: 8px; font-size: 0.875rem; font-weight: 500;
-      opacity: 0; transition: transform 0.25s ease, opacity 0.25s ease;
-      z-index: 200; white-space: nowrap;
-    }
+    /* ── Toast ── */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a1a2e; color: white; padding: 10px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; opacity: 0; transition: transform 0.25s ease, opacity 0.25s ease; z-index: 200; white-space: nowrap; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
     @media (max-width: 600px) {
@@ -283,14 +194,29 @@
 <div id="login-screen" style="display:none">
   <div class="login-card">
     <h1>🥗 Macro Tracker</h1>
-    <p>Enter your email to sign in. We'll send you a magic link — no password needed. Your data will sync across all your devices.</p>
+    <p>Sign in to access your data from any device.</p>
     <input id="login-email" type="email" placeholder="your@email.com" autocomplete="email" />
-    <button id="login-btn">Send magic link</button>
+    <input id="login-password" type="password" placeholder="Password (if you have one)" autocomplete="current-password" />
+    <button class="primary-btn" id="login-password-btn">Sign In</button>
+    <div class="login-divider">or</div>
+    <button class="secondary-btn" id="login-magic-btn">Send magic link to my email</button>
     <div id="login-msg"></div>
   </div>
 </div>
 
-<!-- Loading overlay -->
+<!-- Set password screen (shown after magic link login if no password set) -->
+<div id="set-password-screen" style="display:none">
+  <div class="login-card">
+    <h1>🥗 Macro Tracker</h1>
+    <p>Set a password so you can sign in on any device without needing a magic link.</p>
+    <input id="sp-password" type="password" placeholder="New password (min 6 chars)" autocomplete="new-password" />
+    <input id="sp-confirm"  type="password" placeholder="Confirm password" autocomplete="new-password" />
+    <button class="primary-btn" id="sp-save-btn">Set Password &amp; Continue</button>
+    <div id="set-password-msg"></div>
+  </div>
+</div>
+
+<!-- Loading -->
 <div class="loading-overlay" id="loading-overlay">
   <div class="spinner"></div>
   <span>Loading your data…</span>
@@ -298,7 +224,6 @@
 
 <!-- Main app -->
 <div id="app" style="display:none">
-
   <header>
     <h1>Macro Tracker</h1>
     <div class="header-right">
@@ -311,9 +236,25 @@
       <button class="icon-btn" id="goals-btn">&#9881; Goals</button>
       <button class="icon-btn" id="foods-btn">&#127859; My Foods</button>
       <button class="icon-btn green" id="copy-btn">&#128203; Copy for Claude</button>
+      <button class="icon-btn" id="setpw-btn">&#128273; Set Password</button>
       <button class="icon-btn" id="signout-btn">Sign Out</button>
     </div>
   </header>
+
+  <!-- Set Password modal (in-app) -->
+  <div class="modal-overlay" id="setpw-modal">
+    <div class="modal">
+      <h2>&#128273; Set Password</h2>
+      <p style="font-size:0.85rem;color:#888;margin-bottom:16px;">Set a password so you can sign in with email + password on any device — no magic link needed.</p>
+      <div class="field"><label>New Password</label><input id="setpw-input" type="password" placeholder="At least 6 characters" /></div>
+      <div class="field"><label>Confirm Password</label><input id="setpw-confirm" type="password" placeholder="Repeat password" /></div>
+      <div class="modal-msg" id="setpw-modal-msg"></div>
+      <div class="modal-actions">
+        <button class="modal-cancel" id="setpw-cancel">Cancel</button>
+        <button class="modal-save"   id="setpw-save">Save Password</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Goals modal -->
   <div class="modal-overlay" id="goals-modal">
@@ -324,7 +265,7 @@
       <div class="field"><label>Carbs Goal (g)</label><input id="goal-carb" type="number" min="0" /></div>
       <div class="modal-actions">
         <button class="modal-cancel" id="goals-cancel">Cancel</button>
-        <button class="modal-save" id="goals-save">Save</button>
+        <button class="modal-save"   id="goals-save">Save</button>
       </div>
     </div>
   </div>
@@ -414,18 +355,24 @@
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   const DEFAULT_GOALS = { cal: 2500, pro: 170, carb: 250 };
+  let allLogs = {}, goals = { ...DEFAULT_GOALS }, library = [], currentUser = null;
 
-  let allLogs     = {};
-  let goals       = { ...DEFAULT_GOALS };
-  let library     = [];
-  let currentUser = null;
+  // ── Screen helper ─────────────────────────────────────────────────
+  function showScreen(name) {
+    document.getElementById('login-screen').style.display        = name === 'login' ? 'flex'  : 'none';
+    document.getElementById('set-password-screen').style.display = name === 'setpw' ? 'flex'  : 'none';
+    document.getElementById('app').style.display                 = name === 'app'   ? 'block' : 'none';
+  }
 
   // ── Auth ──────────────────────────────────────────────────────────
   sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      showScreen('setpw');
+      return;
+    }
     if (session?.user) {
       currentUser = session.user;
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
+      showScreen('app');
       showLoading(true);
       await loadAllData();
       showLoading(false);
@@ -433,24 +380,40 @@
     } else {
       currentUser = null;
       allLogs = {}; goals = { ...DEFAULT_GOALS }; library = [];
-      document.getElementById('login-screen').style.display = 'flex';
-      document.getElementById('app').style.display = 'none';
+      showScreen('login');
     }
   });
 
-  // Show login if no session on load
   sb.auth.getSession().then(({ data: { session } }) => {
-    if (!session) document.getElementById('login-screen').style.display = 'flex';
+    if (!session) showScreen('login');
   });
 
-  document.getElementById('login-btn').addEventListener('click', async () => {
+  // Email + password sign in
+  document.getElementById('login-password-btn').addEventListener('click', async () => {
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const msg      = document.getElementById('login-msg');
+    msg.className  = '';
+    if (!email) { msg.textContent = 'Please enter your email.'; msg.className = 'error'; return; }
+    if (!password) { msg.textContent = 'Please enter your password.'; msg.className = 'error'; return; }
+    const btn = document.getElementById('login-password-btn');
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      msg.textContent = error.message.includes('Invalid') ? 'Incorrect email or password.' : 'Error: ' + error.message;
+      msg.className = 'error';
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  });
+
+  // Magic link
+  document.getElementById('login-magic-btn').addEventListener('click', async () => {
     const email = document.getElementById('login-email').value.trim();
-    if (!email) return;
-    const btn = document.getElementById('login-btn');
-    const msg = document.getElementById('login-msg');
-    btn.disabled = true;
-    btn.textContent = 'Sending…';
+    const msg   = document.getElementById('login-msg');
     msg.className = '';
+    if (!email) { msg.textContent = 'Please enter your email first.'; msg.className = 'error'; return; }
+    const btn = document.getElementById('login-magic-btn');
+    btn.disabled = true; btn.textContent = 'Sending…';
     const { error } = await sb.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: 'https://seanpstanton15.github.io/Macro-Tracker/macro-tracker.html' }
@@ -458,122 +421,152 @@
     if (error) {
       msg.textContent = 'Error: ' + error.message;
       msg.className = 'error';
-      btn.disabled = false;
-      btn.textContent = 'Send magic link';
+      btn.disabled = false; btn.textContent = 'Send magic link to my email';
     } else {
       msg.textContent = '✅ Check your email for the login link!';
     }
   });
 
-  document.getElementById('login-email').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('login-btn').click();
+  document.getElementById('login-email').addEventListener('keydown',    e => { if (e.key === 'Enter') document.getElementById('login-password').focus(); });
+  document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('login-password-btn').click(); });
+
+  // Set password screen (after magic link redirect with PASSWORD_RECOVERY)
+  document.getElementById('sp-save-btn').addEventListener('click', async () => {
+    const pw  = document.getElementById('sp-password').value;
+    const pw2 = document.getElementById('sp-confirm').value;
+    const msg = document.getElementById('set-password-msg');
+    msg.className = '';
+    if (!pw || pw.length < 6) { msg.textContent = 'Password must be at least 6 characters.'; msg.className = 'error'; return; }
+    if (pw !== pw2)            { msg.textContent = 'Passwords do not match.'; msg.className = 'error'; return; }
+    const btn = document.getElementById('sp-save-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const { data, error } = await sb.auth.updateUser({ password: pw });
+    if (error) {
+      msg.textContent = 'Error: ' + error.message;
+      btn.disabled = false; btn.textContent = 'Set Password & Continue';
+    } else {
+      currentUser = data.user;
+      showScreen('app');
+      showLoading(true);
+      await loadAllData();
+      showLoading(false);
+      render();
+      showToast('✅ Password set! You can now sign in with email + password.');
+    }
   });
 
-  document.getElementById('signout-btn').addEventListener('click', async () => {
-    await sb.auth.signOut();
+  // Set password modal (in-app)
+  document.getElementById('setpw-btn').addEventListener('click', () => {
+    document.getElementById('setpw-input').value   = '';
+    document.getElementById('setpw-confirm').value = '';
+    document.getElementById('setpw-modal-msg').textContent = '';
+    document.getElementById('setpw-modal').classList.add('open');
+    setTimeout(() => document.getElementById('setpw-input').focus(), 100);
   });
+  document.getElementById('setpw-cancel').addEventListener('click', () => document.getElementById('setpw-modal').classList.remove('open'));
+  document.getElementById('setpw-modal').addEventListener('click', e => { if (e.target === document.getElementById('setpw-modal')) document.getElementById('setpw-modal').classList.remove('open'); });
+  document.getElementById('setpw-save').addEventListener('click', async () => {
+    const pw  = document.getElementById('setpw-input').value;
+    const pw2 = document.getElementById('setpw-confirm').value;
+    const msg = document.getElementById('setpw-modal-msg');
+    if (!pw || pw.length < 6) { msg.textContent = 'Password must be at least 6 characters.'; return; }
+    if (pw !== pw2)            { msg.textContent = 'Passwords do not match.'; return; }
+    const btn = document.getElementById('setpw-save');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const { error } = await sb.auth.updateUser({ password: pw });
+    btn.disabled = false; btn.textContent = 'Save Password';
+    if (error) { msg.textContent = 'Error: ' + error.message; return; }
+    document.getElementById('setpw-modal').classList.remove('open');
+    showToast('✅ Password set! Use email + password to sign in anywhere.');
+  });
+  ['setpw-input','setpw-confirm'].forEach(id =>
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('setpw-save').click(); })
+  );
+
+  document.getElementById('signout-btn').addEventListener('click', () => sb.auth.signOut());
 
   // ── Data ──────────────────────────────────────────────────────────
   async function loadAllData() {
-    const [logsRes, goalsRes, libRes] = await Promise.all([
-      sb.from('food_logs').select('*').order('created_at', { ascending: true }),
-      sb.from('goals').select('*').maybeSingle(),
-      sb.from('food_library').select('*').order('name')
-    ]);
-
-    allLogs = {};
-    (logsRes.data || []).forEach(row => {
-      if (!allLogs[row.date]) allLogs[row.date] = [];
-      allLogs[row.date].push({ id: row.id, desc: row.description, cal: row.cal, pro: row.pro, carb: row.carb });
-    });
-
-    goals   = goalsRes.data ? { cal: goalsRes.data.cal, pro: goalsRes.data.pro, carb: goalsRes.data.carb } : { ...DEFAULT_GOALS };
-    library = (libRes.data || []).map(r => ({ id: r.id, name: r.name, cal: r.cal, pro: r.pro, carb: r.carb }));
+    try {
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
+      const [logsRes, goalsRes, libRes] = await Promise.race([
+        Promise.all([
+          sb.from('food_logs').select('*').order('created_at', { ascending: true }),
+          sb.from('goals').select('*').maybeSingle(),
+          sb.from('food_library').select('*').order('name')
+        ]),
+        timeout
+      ]);
+      allLogs = {};
+      (logsRes.data || []).forEach(row => {
+        if (!allLogs[row.date]) allLogs[row.date] = [];
+        allLogs[row.date].push({ id: row.id, desc: row.description, cal: row.cal, pro: row.pro, carb: row.carb });
+      });
+      goals   = goalsRes.data ? { cal: goalsRes.data.cal, pro: goalsRes.data.pro, carb: goalsRes.data.carb } : { ...DEFAULT_GOALS };
+      library = (libRes.data || []).map(r => ({ id: r.id, name: r.name, cal: r.cal, pro: r.pro, carb: r.carb }));
+    } catch (e) {
+      allLogs = {}; goals = { ...DEFAULT_GOALS }; library = [];
+    }
   }
 
-  function showLoading(on) {
-    document.getElementById('loading-overlay').classList.toggle('show', on);
-  }
+  function showLoading(on) { document.getElementById('loading-overlay').classList.toggle('show', on); }
 
   // ── Helpers ───────────────────────────────────────────────────────
   function dateKey(d) { return d.toISOString().slice(0, 10); }
-
   function formatDisplay(d) {
-    const today = dateKey(new Date());
-    const key   = dateKey(d);
+    const today = dateKey(new Date()), key = dateKey(d);
     if (key === today) return 'Today';
     const yest = new Date(); yest.setDate(yest.getDate() - 1);
     if (key === dateKey(yest)) return 'Yesterday';
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }
-
   function formatHistoryDate(key) {
-    const [y, m, day] = key.split('-').map(Number);
-    return new Date(y, m - 1, day).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    const [y,m,day] = key.split('-').map(Number);
+    return new Date(y,m-1,day).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
   }
+  function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-  function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  let currentDate = new Date();
-  currentDate.setHours(0, 0, 0, 0);
+  let currentDate = new Date(); currentDate.setHours(0,0,0,0);
 
   // ── Combo ─────────────────────────────────────────────────────────
   let comboOpen = false;
-  const comboInput    = document.getElementById('combo-input');
+  const comboInput = document.getElementById('combo-input');
   const comboDropdown = document.getElementById('combo-dropdown');
 
   function buildDropdown(query) {
-    const q       = query.trim().toLowerCase();
+    const q = query.trim().toLowerCase();
     const matches = q === '' ? library : library.filter(f => f.name.toLowerCase().includes(q));
     comboDropdown.innerHTML = '';
-
     if (matches.length === 0 && q !== '') {
-      const el = document.createElement('div');
-      el.className = 'combo-option no-match';
+      const el = document.createElement('div'); el.className = 'combo-option no-match';
       el.textContent = 'No saved foods match — keep typing for custom entry';
       comboDropdown.appendChild(el);
     }
-
     matches.forEach(f => {
-      const opt = document.createElement('div');
-      opt.className = 'combo-option';
+      const opt = document.createElement('div'); opt.className = 'combo-option';
       opt.innerHTML = `<span class="opt-name">${escHtml(f.name)}</span><span class="opt-macs">${f.cal} kcal · ${f.pro}g P · ${f.carb}g C</span>`;
       opt.addEventListener('mousedown', e => { e.preventDefault(); selectFood(f); });
       comboDropdown.appendChild(opt);
     });
-
-    const customOpt = document.createElement('div');
-    customOpt.className = 'combo-option custom-opt';
-    customOpt.textContent = '✏️  Enter custom food…';
-    customOpt.addEventListener('mousedown', e => { e.preventDefault(); enterCustomMode(); });
-    comboDropdown.appendChild(customOpt);
-    openDropdown();
+    const c = document.createElement('div'); c.className = 'combo-option custom-opt';
+    c.textContent = '✏️  Enter custom food…';
+    c.addEventListener('mousedown', e => { e.preventDefault(); enterCustomMode(); });
+    comboDropdown.appendChild(c);
+    comboDropdown.classList.add('open'); comboOpen = true;
   }
-
-  function openDropdown()  { comboDropdown.classList.add('open');    comboOpen = true; }
   function closeDropdown() { comboDropdown.classList.remove('open'); comboOpen = false; }
-
   function selectFood(f) {
     comboInput.value = f.name;
-    document.getElementById('inp-cal').value  = f.cal;
-    document.getElementById('inp-pro').value  = f.pro;
+    document.getElementById('inp-cal').value = f.cal;
+    document.getElementById('inp-pro').value = f.pro;
     document.getElementById('inp-carb').value = f.carb;
-    closeDropdown();
-    document.getElementById('inp-cal').focus();
+    closeDropdown(); document.getElementById('inp-cal').focus();
   }
-
   function enterCustomMode() {
-    comboInput.value = '';
-    comboInput.placeholder = 'Type food description…';
-    document.getElementById('inp-cal').value  = '';
-    document.getElementById('inp-pro').value  = '';
-    document.getElementById('inp-carb').value = '';
-    closeDropdown();
-    comboInput.focus();
+    comboInput.value = ''; comboInput.placeholder = 'Type food description…';
+    document.getElementById('inp-cal').value = document.getElementById('inp-pro').value = document.getElementById('inp-carb').value = '';
+    closeDropdown(); comboInput.focus();
   }
-
   comboInput.addEventListener('focus', () => buildDropdown(comboInput.value));
   comboInput.addEventListener('input', () => buildDropdown(comboInput.value));
   comboInput.addEventListener('blur',  () => setTimeout(closeDropdown, 150));
@@ -582,160 +575,103 @@
   // ── Progress bars ─────────────────────────────────────────────────
   function setBar(id, value, goal) {
     const el = document.getElementById(id);
-    el.style.width = goal > 0 ? Math.min((value / goal) * 100, 100) + '%' : '0%';
+    el.style.width = goal > 0 ? Math.min((value/goal)*100,100)+'%' : '0%';
     el.classList.toggle('over', value > goal && goal > 0);
   }
 
   // ── Render ────────────────────────────────────────────────────────
   function render() {
-    const key     = dateKey(currentDate);
-    const entries = allLogs[key] || [];
-
+    const key = dateKey(currentDate), entries = allLogs[key] || [];
     document.getElementById('date-label').textContent = formatDisplay(currentDate);
-
-    const totals = entries.reduce((acc, e) => {
-      acc.cal  += e.cal  || 0;
-      acc.pro  += e.pro  || 0;
-      acc.carb += e.carb || 0;
-      return acc;
-    }, { cal: 0, pro: 0, carb: 0 });
-
-    document.getElementById('total-cal').textContent  = totals.cal;
-    document.getElementById('total-pro').textContent  = totals.pro + 'g';
-    document.getElementById('total-carb').textContent = totals.carb + 'g';
+    const t = entries.reduce((a,e) => { a.cal+=e.cal||0; a.pro+=e.pro||0; a.carb+=e.carb||0; return a; }, {cal:0,pro:0,carb:0});
+    document.getElementById('total-cal').textContent  = t.cal;
+    document.getElementById('total-pro').textContent  = t.pro+'g';
+    document.getElementById('total-carb').textContent = t.carb+'g';
     document.getElementById('goal-label-cal').textContent  = `of ${goals.cal} kcal`;
     document.getElementById('goal-label-pro').textContent  = `of ${goals.pro}g`;
     document.getElementById('goal-label-carb').textContent = `of ${goals.carb}g`;
-
-    setBar('bar-cal',  totals.cal,  goals.cal);
-    setBar('bar-pro',  totals.pro,  goals.pro);
-    setBar('bar-carb', totals.carb, goals.carb);
-
+    setBar('bar-cal', t.cal, goals.cal); setBar('bar-pro', t.pro, goals.pro); setBar('bar-carb', t.carb, goals.carb);
     const list = document.getElementById('entry-list');
     if (entries.length === 0) {
       list.innerHTML = '<div class="empty-state">No food logged yet. Add something above!</div>';
     } else {
-      list.innerHTML = '<div class="entry-list">' +
-        entries.map(e => `
-          <div class="entry">
-            <div class="entry-desc">${escHtml(e.desc)}</div>
-            <div class="entry-macro cal">${e.cal}<span>kcal</span></div>
-            <div class="entry-macro pro">${e.pro}g<span>protein</span></div>
-            <div class="entry-macro carb">${e.carb}g<span>carbs</span></div>
-            <button class="delete-btn" data-id="${e.id}">&#x2715;</button>
-          </div>`).join('') + '</div>';
-      list.querySelectorAll('.delete-btn').forEach(btn =>
-        btn.addEventListener('click', () => deleteEntry(key, btn.dataset.id))
-      );
+      list.innerHTML = '<div class="entry-list">' + entries.map(e => `
+        <div class="entry">
+          <div class="entry-desc">${escHtml(e.desc)}</div>
+          <div class="entry-macro cal">${e.cal}<span>kcal</span></div>
+          <div class="entry-macro pro">${e.pro}g<span>protein</span></div>
+          <div class="entry-macro carb">${e.carb}g<span>carbs</span></div>
+          <button class="delete-btn" data-id="${e.id}">&#x2715;</button>
+        </div>`).join('') + '</div>';
+      list.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteEntry(key, btn.dataset.id)));
     }
-
     renderHistory();
   }
 
   function renderHistory() {
-    const body       = document.getElementById('history-body');
-    const currentKey = dateKey(currentDate);
-    const keys       = Object.keys(allLogs).filter(k => (allLogs[k] || []).length > 0).sort((a, b) => b.localeCompare(a));
-
-    if (keys.length === 0) {
-      body.innerHTML = '<tr><td colspan="5" class="no-history">No history yet — start logging!</td></tr>';
-      return;
-    }
-
+    const body = document.getElementById('history-body'), ck = dateKey(currentDate);
+    const keys = Object.keys(allLogs).filter(k=>(allLogs[k]||[]).length>0).sort((a,b)=>b.localeCompare(a));
+    if (keys.length === 0) { body.innerHTML = '<tr><td colspan="5" class="no-history">No history yet — start logging!</td></tr>'; return; }
     body.innerHTML = keys.map(k => {
-      const t = (allLogs[k] || []).reduce((acc, e) => {
-        acc.cal  += e.cal  || 0;
-        acc.pro  += e.pro  || 0;
-        acc.carb += e.carb || 0;
-        return acc;
-      }, { cal: 0, pro: 0, carb: 0 });
-
-      const pct    = (v, g) => g > 0 ? `<span style="font-size:.7rem;color:#aaa;margin-left:3px">(${Math.round(v/g*100)}%)</span>` : '';
-      const active = k === currentKey ? ' style="background:#f0f4ff"' : '';
-      return `<tr class="history-row" data-key="${k}"${active}>
+      const t = (allLogs[k]||[]).reduce((a,e)=>{a.cal+=e.cal||0;a.pro+=e.pro||0;a.carb+=e.carb||0;return a;},{cal:0,pro:0,carb:0});
+      const pct = (v,g) => g>0?`<span style="font-size:.7rem;color:#aaa;margin-left:3px">(${Math.round(v/g*100)}%)</span>`:'';
+      return `<tr class="history-row" data-key="${k}"${k===ck?' style="background:#f0f4ff"':''}>
         <td>${formatHistoryDate(k)}</td>
-        <td class="cal-cell">${t.cal}${pct(t.cal, goals.cal)}</td>
-        <td class="pro-cell">${t.pro}g${pct(t.pro, goals.pro)}</td>
-        <td class="carb-cell">${t.carb}g${pct(t.carb, goals.carb)}</td>
-        <td>${(allLogs[k] || []).length}</td>
+        <td class="cal-cell">${t.cal}${pct(t.cal,goals.cal)}</td>
+        <td class="pro-cell">${t.pro}g${pct(t.pro,goals.pro)}</td>
+        <td class="carb-cell">${t.carb}g${pct(t.carb,goals.carb)}</td>
+        <td>${(allLogs[k]||[]).length}</td>
       </tr>`;
     }).join('');
-
-    body.querySelectorAll('.history-row').forEach(row =>
-      row.addEventListener('click', () => {
-        const [y, m, d] = row.dataset.key.split('-').map(Number);
-        currentDate = new Date(y, m - 1, d);
-        render();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      })
-    );
+    body.querySelectorAll('.history-row').forEach(row => row.addEventListener('click', () => {
+      const [y,m,d] = row.dataset.key.split('-').map(Number);
+      currentDate = new Date(y,m-1,d); render(); window.scrollTo({top:0,behavior:'smooth'});
+    }));
   }
 
-  // ── Add / Delete entries ──────────────────────────────────────────
+  // ── CRUD ──────────────────────────────────────────────────────────
   async function addEntry() {
     const desc = comboInput.value.trim();
     const cal  = parseInt(document.getElementById('inp-cal').value)  || 0;
     const pro  = parseInt(document.getElementById('inp-pro').value)  || 0;
     const carb = parseInt(document.getElementById('inp-carb').value) || 0;
     if (!desc) { comboInput.focus(); return; }
-
     const key = dateKey(currentDate);
-    const { data, error } = await sb.from('food_logs')
-      .insert({ user_id: currentUser.id, date: key, description: desc, cal, pro, carb })
-      .select().single();
-
+    const { data, error } = await sb.from('food_logs').insert({ user_id: currentUser.id, date: key, description: desc, cal, pro, carb }).select().single();
     if (error) { showToast('Error saving — try again.'); return; }
-
     if (!allLogs[key]) allLogs[key] = [];
     allLogs[key].push({ id: data.id, desc, cal, pro, carb });
-
-    comboInput.value = '';
-    comboInput.placeholder = 'Search or type a food…';
-    document.getElementById('inp-cal').value  = '';
-    document.getElementById('inp-pro').value  = '';
-    document.getElementById('inp-carb').value = '';
-    comboInput.focus();
-    render();
+    comboInput.value = ''; comboInput.placeholder = 'Search or type a food…';
+    document.getElementById('inp-cal').value = document.getElementById('inp-pro').value = document.getElementById('inp-carb').value = '';
+    comboInput.focus(); render();
   }
 
   async function deleteEntry(key, id) {
     const { error } = await sb.from('food_logs').delete().eq('id', id);
     if (error) { showToast('Error deleting — try again.'); return; }
-    allLogs[key] = (allLogs[key] || []).filter(e => e.id !== id);
-    if (allLogs[key].length === 0) delete allLogs[key];
+    allLogs[key] = (allLogs[key]||[]).filter(e=>e.id!==id);
+    if (allLogs[key].length===0) delete allLogs[key];
     render();
   }
 
   // ── Goals modal ───────────────────────────────────────────────────
   document.getElementById('goals-btn').addEventListener('click', () => {
-    document.getElementById('goal-cal').value  = goals.cal;
-    document.getElementById('goal-pro').value  = goals.pro;
+    document.getElementById('goal-cal').value = goals.cal;
+    document.getElementById('goal-pro').value = goals.pro;
     document.getElementById('goal-carb').value = goals.carb;
     document.getElementById('goals-modal').classList.add('open');
   });
-
-  document.getElementById('goals-cancel').addEventListener('click', () =>
-    document.getElementById('goals-modal').classList.remove('open')
-  );
-
-  document.getElementById('goals-modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('goals-modal'))
-      document.getElementById('goals-modal').classList.remove('open');
-  });
-
+  document.getElementById('goals-cancel').addEventListener('click', () => document.getElementById('goals-modal').classList.remove('open'));
+  document.getElementById('goals-modal').addEventListener('click', e => { if (e.target===document.getElementById('goals-modal')) document.getElementById('goals-modal').classList.remove('open'); });
   document.getElementById('goals-save').addEventListener('click', async () => {
-    const newGoals = {
+    const g = {
       cal:  parseInt(document.getElementById('goal-cal').value)  || DEFAULT_GOALS.cal,
       pro:  parseInt(document.getElementById('goal-pro').value)  || DEFAULT_GOALS.pro,
       carb: parseInt(document.getElementById('goal-carb').value) || DEFAULT_GOALS.carb,
     };
-    const { error } = await sb.from('goals')
-      .upsert({ user_id: currentUser.id, ...newGoals }, { onConflict: 'user_id' });
+    const { error } = await sb.from('goals').upsert({ user_id: currentUser.id, ...g }, { onConflict: 'user_id' });
     if (error) { showToast('Error saving goals.'); return; }
-    goals = newGoals;
-    document.getElementById('goals-modal').classList.remove('open');
-    render();
-    showToast('Goals saved!');
+    goals = g; document.getElementById('goals-modal').classList.remove('open'); render(); showToast('Goals saved!');
   });
 
   // ── Food Library modal ────────────────────────────────────────────
@@ -743,45 +679,25 @@
 
   function renderFoodLibrary() {
     const list = document.getElementById('food-library-list');
-    if (library.length === 0) {
-      list.innerHTML = '<div class="no-foods">No saved foods yet. Add one above!</div>';
-      return;
-    }
+    if (library.length === 0) { list.innerHTML = '<div class="no-foods">No saved foods yet. Add one above!</div>'; return; }
     list.innerHTML = library.map(f => `
       <div class="food-library-item">
         <span class="fname">${escHtml(f.name)}</span>
-        <span class="fmac">${f.cal} kcal</span>
-        <span class="fmac">${f.pro}g P</span>
-        <span class="fmac">${f.carb}g C</span>
-        <span>
-          <button class="lib-edit-btn" data-id="${f.id}">Edit</button>
-          <button class="lib-del-btn"  data-id="${f.id}">✕</button>
-        </span>
+        <span class="fmac">${f.cal} kcal</span><span class="fmac">${f.pro}g P</span><span class="fmac">${f.carb}g C</span>
+        <span><button class="lib-edit-btn" data-id="${f.id}">Edit</button><button class="lib-del-btn" data-id="${f.id}">✕</button></span>
       </div>`).join('');
-
-    list.querySelectorAll('.lib-edit-btn').forEach(btn =>
-      btn.addEventListener('click', () => {
-        const f = library.find(x => x.id === btn.dataset.id);
-        if (!f) return;
-        editingFoodId = f.id;
-        document.getElementById('fl-name').value = f.name;
-        document.getElementById('fl-cal').value  = f.cal;
-        document.getElementById('fl-pro').value  = f.pro;
-        document.getElementById('fl-carb').value = f.carb;
-        document.getElementById('fl-save-btn').textContent = 'Update';
-        document.getElementById('fl-name').focus();
-      })
-    );
-
-    list.querySelectorAll('.lib-del-btn').forEach(btn =>
-      btn.addEventListener('click', async () => {
-        const { error } = await sb.from('food_library').delete().eq('id', btn.dataset.id);
-        if (error) { showToast('Error deleting food.'); return; }
-        library = library.filter(f => f.id !== btn.dataset.id);
-        renderFoodLibrary();
-        showToast('Food removed.');
-      })
-    );
+    list.querySelectorAll('.lib-edit-btn').forEach(btn => btn.addEventListener('click', () => {
+      const f = library.find(x=>x.id===btn.dataset.id); if (!f) return;
+      editingFoodId = f.id;
+      document.getElementById('fl-name').value=f.name; document.getElementById('fl-cal').value=f.cal;
+      document.getElementById('fl-pro').value=f.pro; document.getElementById('fl-carb').value=f.carb;
+      document.getElementById('fl-save-btn').textContent='Update'; document.getElementById('fl-name').focus();
+    }));
+    list.querySelectorAll('.lib-del-btn').forEach(btn => btn.addEventListener('click', async () => {
+      const { error } = await sb.from('food_library').delete().eq('id', btn.dataset.id);
+      if (error) { showToast('Error deleting food.'); return; }
+      library = library.filter(f=>f.id!==btn.dataset.id); renderFoodLibrary(); showToast('Food removed.');
+    }));
   }
 
   document.getElementById('fl-save-btn').addEventListener('click', async () => {
@@ -790,96 +706,55 @@
     const pro  = parseInt(document.getElementById('fl-pro').value)  || 0;
     const carb = parseInt(document.getElementById('fl-carb').value) || 0;
     if (!name) { document.getElementById('fl-name').focus(); return; }
-
     if (editingFoodId) {
       const { error } = await sb.from('food_library').update({ name, cal, pro, carb }).eq('id', editingFoodId);
       if (error) { showToast('Error updating food.'); return; }
-      const idx = library.findIndex(f => f.id === editingFoodId);
-      if (idx !== -1) library[idx] = { id: editingFoodId, name, cal, pro, carb };
-      editingFoodId = null;
-      document.getElementById('fl-save-btn').textContent = 'Add';
-      showToast('Food updated.');
+      const idx = library.findIndex(f=>f.id===editingFoodId);
+      if (idx!==-1) library[idx]={id:editingFoodId,name,cal,pro,carb};
+      editingFoodId=null; document.getElementById('fl-save-btn').textContent='Add'; showToast('Food updated.');
     } else {
-      if (library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
-        showToast('A food with that name already exists.'); return;
-      }
-      const { data, error } = await sb.from('food_library')
-        .insert({ user_id: currentUser.id, name, cal, pro, carb })
-        .select().single();
+      if (library.some(f=>f.name.toLowerCase()===name.toLowerCase())) { showToast('A food with that name already exists.'); return; }
+      const { data, error } = await sb.from('food_library').insert({ user_id: currentUser.id, name, cal, pro, carb }).select().single();
       if (error) { showToast('Error saving food.'); return; }
-      library.push({ id: data.id, name, cal, pro, carb });
-      showToast(`"${name}" saved.`);
+      library.push({ id: data.id, name, cal, pro, carb }); showToast(`"${name}" saved.`);
     }
-
-    document.getElementById('fl-name').value = '';
-    document.getElementById('fl-cal').value  = '';
-    document.getElementById('fl-pro').value  = '';
-    document.getElementById('fl-carb').value = '';
+    document.getElementById('fl-name').value=document.getElementById('fl-cal').value=document.getElementById('fl-pro').value=document.getElementById('fl-carb').value='';
     renderFoodLibrary();
   });
-
-  ['fl-name','fl-cal','fl-pro','fl-carb'].forEach(id =>
-    document.getElementById(id).addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('fl-save-btn').click();
-    })
-  );
-
-  document.getElementById('foods-btn').addEventListener('click', () => {
-    editingFoodId = null;
-    document.getElementById('fl-save-btn').textContent = 'Add';
-    renderFoodLibrary();
-    document.getElementById('foods-modal').classList.add('open');
-  });
-
-  document.getElementById('foods-close').addEventListener('click', () =>
-    document.getElementById('foods-modal').classList.remove('open')
-  );
-
-  document.getElementById('foods-modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('foods-modal'))
-      document.getElementById('foods-modal').classList.remove('open');
-  });
+  ['fl-name','fl-cal','fl-pro','fl-carb'].forEach(id => document.getElementById(id).addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('fl-save-btn').click(); }));
+  document.getElementById('foods-btn').addEventListener('click', () => { editingFoodId=null; document.getElementById('fl-save-btn').textContent='Add'; renderFoodLibrary(); document.getElementById('foods-modal').classList.add('open'); });
+  document.getElementById('foods-close').addEventListener('click', () => document.getElementById('foods-modal').classList.remove('open'));
+  document.getElementById('foods-modal').addEventListener('click', e => { if (e.target===document.getElementById('foods-modal')) document.getElementById('foods-modal').classList.remove('open'); });
 
   // ── Copy for Claude ───────────────────────────────────────────────
   document.getElementById('copy-btn').addEventListener('click', () => {
-    const keys = Object.keys(allLogs).filter(k => (allLogs[k] || []).length > 0).sort();
-    if (keys.length === 0) { showToast('No data to copy yet.'); return; }
-
-    const lines = ['# Macro Tracker Data', '',
-      `Daily Goals: ${goals.cal} kcal | ${goals.pro}g protein | ${goals.carb}g carbs`, ''];
-
+    const keys = Object.keys(allLogs).filter(k=>(allLogs[k]||[]).length>0).sort();
+    if (keys.length===0) { showToast('No data to copy yet.'); return; }
+    const lines = ['# Macro Tracker Data','',`Daily Goals: ${goals.cal} kcal | ${goals.pro}g protein | ${goals.carb}g carbs`,''];
     keys.forEach(k => {
-      const entries = allLogs[k] || [];
-      const t = entries.reduce((acc, e) => { acc.cal += e.cal||0; acc.pro += e.pro||0; acc.carb += e.carb||0; return acc; }, { cal:0, pro:0, carb:0 });
-      const pct = (v, g) => g > 0 ? ` (${Math.round(v/g*100)}% of goal)` : '';
+      const entries=allLogs[k]||[], t=entries.reduce((a,e)=>{a.cal+=e.cal||0;a.pro+=e.pro||0;a.carb+=e.carb||0;return a;},{cal:0,pro:0,carb:0});
+      const pct=(v,g)=>g>0?` (${Math.round(v/g*100)}% of goal)`:'';
       lines.push(`## ${formatHistoryDate(k)}`);
       lines.push(`Totals: ${t.cal} kcal${pct(t.cal,goals.cal)} | ${t.pro}g protein${pct(t.pro,goals.pro)} | ${t.carb}g carbs${pct(t.carb,goals.carb)}`);
-      entries.forEach(e => lines.push(`  - ${e.desc}: ${e.cal} kcal, ${e.pro}g protein, ${e.carb}g carbs`));
+      entries.forEach(e=>lines.push(`  - ${e.desc}: ${e.cal} kcal, ${e.pro}g protein, ${e.carb}g carbs`));
       lines.push('');
     });
-
-    navigator.clipboard.writeText(lines.join('\n'))
-      .then(() => showToast('Copied! Paste into Claude.'))
-      .catch(() => showToast('Copy failed — try a different browser.'));
+    navigator.clipboard.writeText(lines.join('\n')).then(()=>showToast('Copied! Paste into Claude.')).catch(()=>showToast('Copy failed — try a different browser.'));
   });
 
   // ── Nav ───────────────────────────────────────────────────────────
   document.getElementById('add-btn').addEventListener('click', addEntry);
-  ['inp-carb','inp-cal','inp-pro'].forEach(id =>
-    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') addEntry(); })
-  );
+  ['inp-carb','inp-cal','inp-pro'].forEach(id => document.getElementById(id).addEventListener('keydown', e => { if (e.key==='Enter') addEntry(); }));
   document.getElementById('prev-day').addEventListener('click', () => { currentDate.setDate(currentDate.getDate()-1); render(); });
   document.getElementById('next-day').addEventListener('click', () => { currentDate.setDate(currentDate.getDate()+1); render(); });
-  document.getElementById('go-today').addEventListener('click', () => { currentDate = new Date(); currentDate.setHours(0,0,0,0); render(); });
+  document.getElementById('go-today').addEventListener('click', () => { currentDate=new Date(); currentDate.setHours(0,0,0,0); render(); });
 
   // ── Toast ─────────────────────────────────────────────────────────
   let toastTimer;
   function showToast(msg) {
     const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 2500);
   }
 </script>
 </body>
