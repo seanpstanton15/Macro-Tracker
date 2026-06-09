@@ -372,8 +372,11 @@
     }
     if (session?.user) {
       currentUser = session.user;
+      // Show app instantly from cache, then refresh in background
+      const hasCached = loadCache();
       showScreen('app');
-      showLoading(true);
+      render();
+      if (!hasCached) showLoading(true);
       await loadAllData();
       showLoading(false);
       render();
@@ -446,8 +449,10 @@
       btn.disabled = false; btn.textContent = 'Set Password & Continue';
     } else {
       currentUser = data.user;
+      const hasCached = loadCache();
       showScreen('app');
-      showLoading(true);
+      render();
+      if (!hasCached) showLoading(true);
       await loadAllData();
       showLoading(false);
       render();
@@ -485,13 +490,33 @@
 
   document.getElementById('signout-btn').addEventListener('click', () => sb.auth.signOut());
 
+  // ── Cache helpers ─────────────────────────────────────────────────
+  const CACHE_KEY = 'macroTrackerCache_v1';
+  function saveCache() {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ allLogs, goals, library })); } catch(e) {}
+  }
+  function loadCache() {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return false;
+      const c = JSON.parse(raw);
+      if (c.allLogs)  allLogs  = c.allLogs;
+      if (c.goals)    goals    = c.goals;
+      if (c.library)  library  = c.library;
+      return true;
+    } catch(e) { return false; }
+  }
+
   // ── Data ──────────────────────────────────────────────────────────
   async function loadAllData() {
     try {
-      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
+      // Only fetch last 120 days of logs — older history loads lazily
+      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 120);
+      const cutoffStr = cutoff.toISOString().slice(0, 10);
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000));
       const [logsRes, goalsRes, libRes] = await Promise.race([
         Promise.all([
-          sb.from('food_logs').select('*').order('created_at', { ascending: true }),
+          sb.from('food_logs').select('*').gte('date', cutoffStr).order('created_at', { ascending: true }),
           sb.from('goals').select('*').maybeSingle(),
           sb.from('food_library').select('*').order('name')
         ]),
@@ -504,8 +529,10 @@
       });
       goals   = goalsRes.data ? { cal: goalsRes.data.cal, pro: goalsRes.data.pro, carb: goalsRes.data.carb } : { ...DEFAULT_GOALS };
       library = (libRes.data || []).map(r => ({ id: r.id, name: r.name, cal: r.cal, pro: r.pro, carb: r.carb }));
+      saveCache();
     } catch (e) {
-      allLogs = {}; goals = { ...DEFAULT_GOALS }; library = [];
+      // If fetch fails but we have cache, keep it; otherwise reset
+      if (!Object.keys(allLogs).length) { allLogs = {}; goals = { ...DEFAULT_GOALS }; library = []; }
     }
   }
 
@@ -641,6 +668,7 @@
     if (error) { showToast('Error saving — try again.'); return; }
     if (!allLogs[key]) allLogs[key] = [];
     allLogs[key].push({ id: data.id, desc, cal, pro, carb });
+    saveCache();
     comboInput.value = ''; comboInput.placeholder = 'Search or type a food…';
     document.getElementById('inp-cal').value = document.getElementById('inp-pro').value = document.getElementById('inp-carb').value = '';
     comboInput.focus(); render();
@@ -651,6 +679,7 @@
     if (error) { showToast('Error deleting — try again.'); return; }
     allLogs[key] = (allLogs[key]||[]).filter(e=>e.id!==id);
     if (allLogs[key].length===0) delete allLogs[key];
+    saveCache();
     render();
   }
 
@@ -671,7 +700,7 @@
     };
     const { error } = await sb.from('goals').upsert({ user_id: currentUser.id, ...g }, { onConflict: 'user_id' });
     if (error) { showToast('Error saving goals.'); return; }
-    goals = g; document.getElementById('goals-modal').classList.remove('open'); render(); showToast('Goals saved!');
+    goals = g; saveCache(); document.getElementById('goals-modal').classList.remove('open'); render(); showToast('Goals saved!');
   });
 
   // ── Food Library modal ────────────────────────────────────────────
