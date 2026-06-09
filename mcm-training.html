@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCM Sub-3:15 Training Plan</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f4;
+    --text-primary: #1c1917;
+    --text-secondary: #78716c;
+    --border: #e7e5e4;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1c1917;
+      --bg-secondary: #292524;
+      --text-primary: #fafaf9;
+      --text-secondary: #a8a29e;
+      --border: #44403c;
+    }
+  }
+  body {
+    font-family: var(--font);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+  #root { max-width: 900px; margin: 0 auto; }
+  button { font-family: var(--font); cursor: pointer; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const {useState, useEffect, useRef} = React;
+
+const PC = {
+  1: {bg:"#E1F5EE", bd:"#1D9E75", tx:"#0F6E56", name:"Base"},
+  2: {bg:"#E6F1FB", bd:"#378ADD", tx:"#185FA5", name:"Build"},
+  3: {bg:"#FAEEDA", bd:"#BA7517", tx:"#854F0B", name:"Peak"},
+  4: {bg:"#FAECE7", bd:"#993C1D", tx:"#993C1D", name:"Race Specific"},
+  5: {bg:"#EEEDFE", bd:"#534AB7", tx:"#534AB7", name:"Taper"},
+};
+const PWR = {1:"Wks 1–4", 2:"Wks 5–10", 3:"Wks 11–16", 4:"Wks 17–20", 5:"Wks 21–23"};
+const PD = [
+  "Transition out of post-race recovery. Re-establish structure, introduce MP feel, build the long run from nothing. Easy really means easy: 8:45–9:15/mi.",
+  "Mileage climbs into the 50s. MP segments grow inside long runs. Two quality sessions per week. This is where the aerobic engine gets built.",
+  "Peak volume 60–65 miles. Marathon simulations with 10–14 mi @ MP. Week 14 (9 mi @ MP on Tuesday, 23 mi on Sunday) is the hardest week of the plan.",
+  "Volume drops slightly, race-specificity maxes out. Every Sunday long run has a major MP block. Fitness is peaking — execute confidently.",
+  "Volume drops fast. Short MP touches keep the legs sharp. Arrive at the start line rested, not rusty.",
+];
+const TS = {
+  easy:     {bg:"#E1F5EE", co:"#0F6E56", lb:"Easy"},
+  tempo:    {bg:"#FAEEDA", co:"#854F0B", lb:"Tempo"},
+  mp:       {bg:"#FAECE7", co:"#993C1D", lb:"MP"},
+  interval: {bg:"#EEEDFE", co:"#534AB7", lb:"Intervals"},
+  long:     {bg:"#E6F1FB", co:"#185FA5", lb:"Long Run"},
+  bike:     {bg:"#F1EFE8", co:"#5F5E5A", lb:"Bike"},
+  race:     {bg:"#FCEBEB", co:"#A32D2D", lb:"Race Day"},
+  rest:     {bg:"#F1EFE8", co:"#888780", lb:"Rest"},
+};
+
+const WEEKS = [
+  // PHASE 1 — BASE
+  {w:1,p:1,dates:"May 18–24",mi:40,days:[
+    {d:"Mon",t:"easy",x:"7.6 mi easy (done)",pa:"8:21/mi today"},
+    {d:"Tue",t:"rest",x:"Full rest",pa:"—"},
+    {d:"Wed",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"tempo",x:"8 mi w/ 3×10 min tempo",pa:"7:00–7:05/mi (tempo)"},
+    {d:"Fri",t:"rest",x:"Rest or 4 mi easy",pa:"Optional"},
+    {d:"Sat",t:"bike",x:"Long ride (2–3 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"14 mi easy",pa:"8:45–9:15/mi"},
+  ]},
+  {w:2,p:1,dates:"May 25–31",mi:43,days:[
+    {d:"Mon",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"interval",x:"9 mi w/ 4×1 mi",pa:"6:35–6:40/mi (repeats)"},
+    {d:"Wed",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"6 mi moderate",pa:"8:10–8:20/mi"},
+    {d:"Fri",t:"rest",x:"Rest or 4 mi easy",pa:"Optional"},
+    {d:"Sat",t:"bike",x:"Long ride (2–3 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"15 mi easy",pa:"8:45–9:15/mi"},
+  ]},
+  {w:3,p:1,dates:"Jun 1–7",mi:46,days:[
+    {d:"Mon",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"mp",x:"9 mi w/ 5 mi @ MP",pa:"7:25–7:30/mi (MP)"},
+    {d:"Wed",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"tempo",x:"7 mi w/ 3×10 min tempo",pa:"7:00–7:05/mi (tempo)"},
+    {d:"Fri",t:"rest",x:"Rest or 4 mi easy",pa:"Optional"},
+    {d:"Sat",t:"bike",x:"Long ride (2–3 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"16 mi easy",pa:"8:45–9:15/mi"},
+  ]},
+  {w:4,p:1,dates:"Jun 8–14",mi:34,rec:true,days:[
+    {d:"Mon",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"tempo",x:"6 mi w/ 2×10 min tempo",pa:"7:00–7:05/mi (tempo)"},
+    {d:"Wed",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"4 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Fri",t:"rest",x:"Full rest",pa:"—"},
+    {d:"Sat",t:"bike",x:"Easy/moderate ride",pa:"Easy"},
+    {d:"Sun",t:"long",x:"12 mi easy (cutback)",pa:"9:00–9:15/mi"},
+  ]},
+  // PHASE 2 — BUILD
+  {w:5,p:2,dates:"Jun 15–21",mi:50,days:[
+    {d:"Mon",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"interval",x:"9 mi w/ 5×1200m",pa:"6:25–6:35/mi (repeats)"},
+    {d:"Wed",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"7 mi moderate",pa:"8:10–8:20/mi"},
+    {d:"Fri",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Long ride (2.5–3 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"17 mi w/ miles 9–14 @ MP",pa:"8:45 easy / 7:27 (MP)"},
+  ]},
+  {w:6,p:2,dates:"Jun 22–28",mi:52,days:[
+    {d:"Mon",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"tempo",x:"10 mi w/ 6 mi tempo",pa:"7:00–7:05/mi (tempo)"},
+    {d:"Wed",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"7 mi w/ 6×20s strides",pa:"8:45 + sprint strides"},
+    {d:"Fri",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Long ride (3 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"18 mi steady",pa:"8:45–9:00/mi"},
+  ]},
+  {w:7,p:2,dates:"Jun 29–Jul 5",mi:54,days:[
+    {d:"Mon",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"interval",x:"9 mi w/ 4×2 mi",pa:"7:05–7:10/mi (repeats)"},
+    {d:"Wed",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"7 mi moderate",pa:"8:10–8:20/mi"},
+    {d:"Fri",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Long ride (3 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"19 mi w/ 10 mi @ MP",pa:"8:45 easy / 7:27 (MP)"},
+  ]},
+  {w:8,p:2,dates:"Jul 6–12",mi:40,rec:true,days:[
+    {d:"Mon",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"interval",x:"7 mi w/ 3×1 mi",pa:"6:35/mi (repeats)"},
+    {d:"Wed",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Fri",t:"rest",x:"Full rest",pa:"—"},
+    {d:"Sat",t:"bike",x:"Easy/moderate ride",pa:"Easy"},
+    {d:"Sun",t:"long",x:"14 mi easy",pa:"9:00–9:15/mi"},
+  ]},
+  {w:9,p:2,dates:"Jul 13–19",mi:56,days:[
+    {d:"Mon",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"mp",x:"10 mi w/ 8 mi @ MP",pa:"7:25–7:30/mi (MP)"},
+    {d:"Wed",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"interval",x:"8 mi w/ 4×1 mi",pa:"6:30–6:35/mi (repeats)"},
+    {d:"Fri",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Long ride (3 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"20 mi w/ last 6 @ MP",pa:"8:45 easy / 7:27 (MP)"},
+  ]},
+  {w:10,p:2,dates:"Jul 20–26",mi:58,days:[
+    {d:"Mon",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"tempo",x:"11 mi w/ 3×3 mi",pa:"7:00–7:05/mi (tempo)"},
+    {d:"Wed",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"8 mi moderate",pa:"8:10–8:20/mi"},
+    {d:"Fri",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Long ride (3 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"21 mi easy",pa:"8:45–9:00/mi"},
+  ]},
+  // PHASE 3 — PEAK
+  {w:11,p:3,dates:"Jul 27–Aug 2",mi:58,days:[
+    {d:"Mon",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"interval",x:"10 mi w/ 5×1600m",pa:"6:28–6:35/mi (repeats)"},
+    {d:"Wed",t:"easy",x:"8 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"mp",x:"8 mi w/ 5 mi @ MP",pa:"7:25–7:30/mi (MP)"},
+    {d:"Fri",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Long ride (3 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"21 mi w/ miles 13–21 @ MP",pa:"8:45 easy / 7:27 (MP sim)"},
+  ]},
+  {w:12,p:3,dates:"Aug 3–9",mi:44,rec:true,days:[
+    {d:"Mon",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"tempo",x:"8 mi w/ 2×20 min tempo",pa:"7:00–7:05/mi (tempo)"},
+    {d:"Wed",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Fri",t:"rest",x:"Full rest",pa:"—"},
+    {d:"Sat",t:"bike",x:"Moderate ride (2 hrs)",pa:"Easy"},
+    {d:"Sun",t:"long",x:"16 mi easy",pa:"9:00–9:15/mi"},
+  ]},
+  {w:13,p:3,dates:"Aug 10–16",mi:62,days:[
+    {d:"Mon",t:"easy",x:"8 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"interval",x:"11 mi w/ 4×2 mi",pa:"7:05–7:10/mi (repeats)"},
+    {d:"Wed",t:"easy",x:"8 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"mp",x:"8 mi w/ 6 mi @ MP",pa:"7:25–7:30/mi (MP)"},
+    {d:"Fri",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Long ride (3+ hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"22 mi w/ last 10 @ MP",pa:"8:45 easy / 7:27 (MP)"},
+  ]},
+  {w:14,p:3,dates:"Aug 17–23",mi:65,days:[
+    {d:"Mon",t:"easy",x:"8 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"mp",x:"11 mi w/ 9 mi @ MP",pa:"7:25–7:30/mi (GOAL WORKOUT)"},
+    {d:"Wed",t:"easy",x:"8 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"interval",x:"8 mi w/ 5×1200m",pa:"6:25–6:35/mi (repeats)"},
+    {d:"Fri",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Long ride (3 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"23 mi easy (peak long run)",pa:"8:45–9:00/mi"},
+  ]},
+  {w:15,p:3,dates:"Aug 24–30",mi:46,rec:true,days:[
+    {d:"Mon",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"interval",x:"8 mi w/ 3×1 mi",pa:"6:35/mi (repeats)"},
+    {d:"Wed",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Fri",t:"rest",x:"Full rest",pa:"—"},
+    {d:"Sat",t:"bike",x:"Easy ride (1.5–2 hrs)",pa:"Easy"},
+    {d:"Sun",t:"long",x:"17 mi easy",pa:"9:00–9:15/mi"},
+  ]},
+  {w:16,p:3,dates:"Aug 31–Sep 6",mi:62,days:[
+    {d:"Mon",t:"easy",x:"8 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"tempo",x:"11 mi w/ 3×3 mi",pa:"7:00–7:05/mi (tempo)"},
+    {d:"Wed",t:"easy",x:"8 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"mp",x:"8 mi w/ 7 mi @ MP",pa:"7:25–7:30/mi (MP)"},
+    {d:"Fri",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Long ride (3 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"21 mi w/ 13 mi @ MP",pa:"8:45 easy / 7:27 (MP)"},
+  ]},
+  // PHASE 4 — RACE SPECIFIC
+  {w:17,p:4,dates:"Sep 7–13",mi:56,days:[
+    {d:"Mon",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"mp",x:"10 mi w/ 6 mi @ MP + 2×1 mi",pa:"7:27 (MP) / 6:30 (fast)"},
+    {d:"Wed",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"interval",x:"8 mi w/ 4×1 mi",pa:"6:30–6:35/mi (repeats)"},
+    {d:"Fri",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Moderate ride (2.5 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"19 mi w/ 12 mi @ MP",pa:"8:45 easy / 7:27 (MP)"},
+  ]},
+  {w:18,p:4,dates:"Sep 14–20",mi:56,days:[
+    {d:"Mon",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"tempo",x:"10 mi w/ 2×4 mi tempo",pa:"7:00–7:05/mi (tempo)"},
+    {d:"Wed",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"7 mi moderate",pa:"8:10–8:20/mi"},
+    {d:"Fri",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Moderate ride (2–2.5 hrs)",pa:"Moderate"},
+    {d:"Sun",t:"long",x:"20 mi easy (confidence run)",pa:"8:45–9:00/mi"},
+  ]},
+  {w:19,p:4,dates:"Sep 21–27",mi:42,rec:true,days:[
+    {d:"Mon",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"interval",x:"7 mi w/ 4×1 mi",pa:"6:35/mi (repeats)"},
+    {d:"Wed",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Fri",t:"rest",x:"Full rest",pa:"—"},
+    {d:"Sat",t:"bike",x:"Easy ride (1.5 hrs)",pa:"Easy"},
+    {d:"Sun",t:"long",x:"14 mi easy",pa:"9:00–9:15/mi"},
+  ]},
+  {w:20,p:4,dates:"Sep 28–Oct 4",mi:50,days:[
+    {d:"Mon",t:"easy",x:"7 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"mp",x:"10 mi w/ 5 mi @ MP + 2×1 mi",pa:"7:27 (MP) / 6:30 (fast)"},
+    {d:"Wed",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"6 mi moderate",pa:"8:10–8:20/mi"},
+    {d:"Fri",t:"easy",x:"4 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Short easy ride (1 hr)",pa:"Easy"},
+    {d:"Sun",t:"long",x:"17 mi w/ 8 mi @ MP",pa:"8:45 easy / 7:27 (MP)"},
+  ]},
+  // PHASE 5 — TAPER
+  {w:21,p:5,dates:"Oct 5–11",mi:40,days:[
+    {d:"Mon",t:"easy",x:"6 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"mp",x:"8 mi w/ 4 mi @ MP",pa:"7:25–7:30/mi (MP)"},
+    {d:"Wed",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"5 mi w/ 6×20s strides",pa:"8:45 + strides"},
+    {d:"Fri",t:"easy",x:"4 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Sat",t:"bike",x:"Short easy ride (1 hr)",pa:"Easy"},
+    {d:"Sun",t:"long",x:"13 mi w/ 6 mi @ MP",pa:"8:45 easy / 7:27 (MP)"},
+  ]},
+  {w:22,p:5,dates:"Oct 12–18",mi:28,days:[
+    {d:"Mon",t:"easy",x:"5 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"mp",x:"6 mi w/ 3 mi @ MP",pa:"7:25–7:30/mi (MP)"},
+    {d:"Wed",t:"easy",x:"4 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Thu",t:"easy",x:"3 mi w/ 4×20s strides",pa:"8:45 + strides"},
+    {d:"Fri",t:"easy",x:"2 mi easy",pa:"Very easy"},
+    {d:"Sat",t:"bike",x:"Very easy or rest",pa:"Easy"},
+    {d:"Sun",t:"long",x:"8 mi easy",pa:"9:00–9:15/mi"},
+  ]},
+  {w:23,p:5,dates:"Oct 19–25",mi:18,days:[
+    {d:"Mon",t:"easy",x:"4 mi easy",pa:"8:45–9:15/mi"},
+    {d:"Tue",t:"mp",x:"5 mi w/ 2 mi @ MP + strides",pa:"7:27/mi MP feel"},
+    {d:"Wed",t:"easy",x:"3 mi easy",pa:"9:00–9:15/mi"},
+    {d:"Thu",t:"easy",x:"3 mi easy",pa:"9:00–9:15/mi"},
+    {d:"Fri",t:"easy",x:"2 mi shakeout",pa:"Very easy"},
+    {d:"Sat",t:"rest",x:"Full rest — packet pickup, sleep",pa:"—"},
+    {d:"Sun",t:"race",x:"Marine Corps Marathon",pa:"Goal: 7:27/mi → Sub-3:15"},
+  ]},
+];
+
+const PACES = [
+  {lb:"Easy / Recovery",   pa:"8:45–9:15/mi", ds:"All easy days & the first 2/3 of long runs. Non-negotiable.", t:"easy"},
+  {lb:"Marathon Pace (MP)",pa:"7:25–7:30/mi", ds:"Your race pace. Should feel controlled, not heroic.",       t:"mp"},
+  {lb:"Tempo / Threshold", pa:"7:00–7:05/mi", ds:"Comfortably hard. 20–40 min efforts with warm-up/cool-down.", t:"tempo"},
+  {lb:"Intervals / Repeats",pa:"6:25–6:40/mi",ds:"Hard but controlled. 800m–2 mi with equal recovery.",       t:"interval"},
+  {lb:"Race goal",         pa:"7:27/mi even", ds:"Even splits → 3:14:xx. First 10K should feel almost easy.",  t:"race"},
+];
+
+const FITNESS = [
+  {lb:"2026 runs",     val:"74"},
+  {lb:"2026 mileage",  val:"402 mi"},
+  {lb:"Race best pace",val:"6:45/mi"},
+  {lb:"Aerobic trend", val:"↑ 16.8%"},
+];
+
+const KEY_WORKOUTS = [
+  {wk:"Week 9 · Tue",  nm:"8 mi @ MP",         ds:"First long MP run. 8 continuous miles at 7:27 tells you where your fitness is. Should feel controlled.", co:"#993C1D", bg:"#FAECE7"},
+  {wk:"Week 14 · Tue", nm:"9 mi @ MP",         ds:"The goal workout. 9 miles at race pace after warm-up. If this feels manageable, sub-3:15 is yours.",     co:"#854F0B", bg:"#FAEEDA"},
+  {wk:"Week 16 · Sun", nm:"21 mi w/ 13 @ MP", ds:"Marathon simulation. The hardest run of the plan. If you finish it, race day is just another long run.",   co:"#185FA5", bg:"#E6F1FB"},
+];
+
+// Determine current week based on today's date
+function getCurrentWeek() {
+  const today = new Date();
+  const starts = [
+    new Date(2026,4,18), new Date(2026,4,25), new Date(2026,5,1),  new Date(2026,5,8),
+    new Date(2026,5,15), new Date(2026,5,22), new Date(2026,5,29), new Date(2026,6,6),
+    new Date(2026,6,13), new Date(2026,6,20), new Date(2026,6,27), new Date(2026,7,3),
+    new Date(2026,7,10), new Date(2026,7,17), new Date(2026,7,24), new Date(2026,7,31),
+    new Date(2026,8,7),  new Date(2026,8,14), new Date(2026,8,21), new Date(2026,8,28),
+    new Date(2026,9,5),  new Date(2026,9,12), new Date(2026,9,19),
+  ];
+  for (let i = starts.length - 1; i >= 0; i--) {
+    if (today >= starts[i]) return i + 1;
+  }
+  return 1;
+}
+
+function s(tag, props, ...children) {
+  return React.createElement(tag, props, ...children);
+}
+
+function App() {
+  const initWeek = Math.min(Math.max(getCurrentWeek(), 1), 23);
+  const initPhase = WEEKS.find(w => w.w === initWeek)?.p || 1;
+
+  const [sp, setSp] = useState(initPhase);
+  const [sw, setSw] = useState(initWeek);
+  const chartRef = useRef(null);
+  const chartInst = useRef(null);
+
+  const pw = WEEKS.filter(w => w.p === sp);
+  const cw = WEEKS.find(w => w.w === sw) || pw[0];
+  const pc = PC[sp];
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+
+  const bgP  = isDark ? '#292524' : 'var(--bg-primary)';
+  const bgS  = isDark ? '#44403c' : '#f5f5f4';
+  const txP  = isDark ? '#fafaf9' : '#1c1917';
+  const txS  = isDark ? '#a8a29e' : '#78716c';
+  const bdr  = isDark ? '#57534e' : '#e7e5e4';
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    if (chartInst.current) chartInst.current.destroy();
+    const labels = WEEKS.map(w => `W${w.w}`);
+    const data = WEEKS.map(w => w.mi);
+    const bgs = WEEKS.map(w => {
+      const c = PC[w.p];
+      return w.w === sw ? c.bd : (isDark ? c.bd + '55' : c.bg);
+    });
+    chartInst.current = new Chart(chartRef.current, {
+      type: 'bar',
+      data: {labels, datasets: [{data, backgroundColor: bgs, borderWidth: 0, borderRadius: 3}]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {legend: {display: false}, tooltip: {callbacks: {label: ctx => `${ctx.raw} mi`}}},
+        scales: {
+          x: {grid: {display: false}, ticks: {font: {size: 9}, color: txS, maxRotation: 0, autoSkip: true, maxTicksLimit: 12}},
+          y: {display: false, max: 70},
+        },
+        onClick: (e, els) => {
+          if (els.length) {
+            const wk = WEEKS[els[0].index];
+            setSp(wk.p); setSw(wk.w);
+          }
+        },
+      }
+    });
+  }, [sw, sp]);
+
+  const card = (children, extra = {}) =>
+    s('div', {style: {background: bgS, borderRadius: 8, padding: '8px 10px', ...extra}}, children);
+
+  return s('div', {style: {fontFamily: 'var(--font)'}},
+
+    // Header
+    s('div', {style: {marginBottom: 20}},
+      s('div', {style: {fontSize: 11, color: txS, marginBottom: 3, letterSpacing: '0.06em', textTransform: 'uppercase'}},
+        'Marine Corps Marathon · Oct 25, 2026 · 23 weeks'),
+      s('div', {style: {fontSize: 22, fontWeight: 600, color: txP, marginBottom: 4}}, 'Sub-3:15 Training Plan'),
+      s('div', {style: {fontSize: 12, color: txS}},
+        'Calibrated to Cherry Blossom 10 mi (6:45 @ 168 HR) · Goal pace 7:27/mi · Peaks at 65 miles/week')
+    ),
+
+    // Fitness stats
+    s('div', {style: {display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 20}},
+      FITNESS.map((f, i) => card(
+        [s('div', {key:'lb', style:{fontSize:10,color:txS,marginBottom:2}}, f.lb),
+         s('div', {key:'val', style:{fontSize:15,fontWeight:500,color:txP}}, f.val)],
+        {key: i}
+      ))
+    ),
+
+    // Mileage chart
+    s('div', {style: {position: 'relative', width: '100%', height: 90, marginBottom: 20}},
+      s('canvas', {ref: chartRef, 'aria-label': 'Weekly mileage chart. Click a bar to navigate.'})
+    ),
+
+    // Phase selector
+    s('div', {style: {display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap'}},
+      [1,2,3,4,5].map(p => {
+        const c = PC[p]; const isA = sp === p;
+        return s('button', {
+          key: p,
+          onClick: () => { setSp(p); setSw(WEEKS.find(w => w.p === p).w); },
+          style: {padding: '5px 12px', borderRadius: 8,
+            border: isA ? `2px solid ${c.bd}` : `1px solid ${bdr}`,
+            background: isA ? c.bg : 'transparent',
+            color: isA ? c.tx : txS, fontSize: 12, fontWeight: isA ? 600 : 400}
+        },
+          c.name,
+          s('span', {style: {marginLeft: 5, fontSize: 10, opacity: 0.7}}, PWR[p])
+        );
+      })
+    ),
+
+    // Phase description
+    s('div', {style: {padding: '8px 12px', borderRadius: 8, background: pc.bg,
+      border: `1px solid ${pc.bd}`, fontSize: 12, color: pc.tx, marginBottom: 14}},
+      PD[sp - 1]
+    ),
+
+    // Week selector
+    s('div', {style: {display: 'flex', gap: 5, marginBottom: 14, flexWrap: 'wrap'}},
+      pw.map(w => {
+        const isA = w.w === sw; const isCur = w.w === initWeek;
+        return s('button', {
+          key: w.w, onClick: () => setSw(w.w),
+          style: {padding: '4px 11px', borderRadius: 8,
+            border: isA ? `2px solid ${pc.bd}` : isCur ? `1.5px dashed ${pc.bd}` : `1px solid ${bdr}`,
+            background: isA ? pc.bg : 'transparent',
+            color: isA ? pc.tx : txS, fontSize: 12, fontWeight: isA ? 600 : 400}
+        },
+          `Wk ${w.w}`,
+          w.rec ? s('span', {style: {marginLeft: 3, fontSize: 9}}, '↓') : null,
+          isCur && !isA ? s('span', {style: {marginLeft: 3, fontSize: 9, color: pc.bd}}, '•') : null
+        );
+      })
+    ),
+
+    // Week detail
+    cw && s('div', {style: {background: bgP, border: `1px solid ${bdr}`, borderRadius: 12,
+      padding: '14px 16px', marginBottom: 24}},
+      s('div', {style: {display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}},
+        s('div', {style: {display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap'}},
+          s('span', {style: {fontWeight: 600, fontSize: 15}}, `Week ${cw.w}`),
+          s('span', {style: {fontSize: 12, color: txS}}, cw.dates),
+          cw.rec && s('span', {style: {fontSize: 10, padding: '2px 7px', background: '#E1F5EE', color: '#0F6E56', borderRadius: 6}}, 'Recovery week'),
+          cw.w === 14 && s('span', {style: {fontSize: 10, padding: '2px 7px', background: '#FAEEDA', color: '#854F0B', borderRadius: 6}}, 'Peak week'),
+          cw.w === 23 && s('span', {style: {fontSize: 10, padding: '2px 7px', background: '#FCEBEB', color: '#A32D2D', borderRadius: 6}}, 'Race week'),
+          cw.w === initWeek && s('span', {style: {fontSize: 10, padding: '2px 7px', background: pc.bg, color: pc.tx, borderRadius: 6}}, 'Current week')
+        ),
+        s('span', {style: {fontSize: 13, color: txS, fontWeight: 500}}, `~${cw.mi} mi`)
+      ),
+      s('div', {style: {display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 6}},
+        cw.days.map((d, i) => {
+          const ts = TS[d.t];
+          const isRace = d.t === 'race';
+          const isDone = cw.w === 1 && i === 0;
+          return s('div', {key: i, style: {
+            borderRadius: 8,
+            border: isRace ? '2px solid #A32D2D' : isDone ? '2px solid #1D9E75' : `1px solid ${bdr}`,
+            padding: '8px 7px',
+            background: isRace ? '#FCEBEB' : isDone ? '#E1F5EE' : bgS,
+          }},
+            s('div', {style: {display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5}},
+              s('span', {style: {fontSize: 10, fontWeight: 600, color: txS}}, d.d),
+              s('span', {style: {fontSize: 9, padding: '1px 5px', background: ts.bg, color: ts.co, borderRadius: 5}}, ts.lb)
+            ),
+            s('div', {style: {fontSize: 11, fontWeight: 500, color: isRace ? '#A32D2D' : isDone ? '#0F6E56' : txP, lineHeight: 1.35, marginBottom: 5}}, d.x),
+            s('div', {style: {fontSize: 10, color: txS, lineHeight: 1.3}}, d.pa)
+          );
+        })
+      )
+    ),
+
+    // Pace guide
+    s('div', {style: {fontSize: 13, fontWeight: 600, color: txP, marginBottom: 8}}, 'Target paces — sub-3:15'),
+    s('div', {style: {display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px,1fr))', gap: 8, marginBottom: 24}},
+      PACES.map((p, i) => {
+        const ts = TS[p.t];
+        return card(
+          [s('div', {key:'lb', style:{fontSize:10,color:txS,marginBottom:3}}, p.lb),
+           s('div', {key:'pa', style:{fontSize:13,fontWeight:600,color:ts.co,marginBottom:3}}, p.pa),
+           s('div', {key:'ds', style:{fontSize:10,color:txS}}, p.ds)],
+          {key: i}
+        );
+      })
+    ),
+
+    // Key workouts
+    s('div', {style: {fontSize: 13, fontWeight: 600, color: txP, marginBottom: 8}}, 'The 3 workouts that will make or break sub-3:15'),
+    s('div', {style: {display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: 8}},
+      KEY_WORKOUTS.map((k, i) =>
+        s('div', {key: i, style: {background: k.bg, border: `1px solid ${k.co}`, borderRadius: 8, padding: '10px 12px',
+          cursor: 'pointer'},
+          onClick: () => {
+            const wkNum = parseInt(k.wk.match(/\d+/)[0]);
+            const wk = WEEKS.find(w => w.w === wkNum);
+            if (wk) { setSp(wk.p); setSw(wk.w); }
+          }
+        },
+          s('div', {style: {fontSize: 10, color: k.co, marginBottom: 3}}, k.wk),
+          s('div', {style: {fontSize: 13, fontWeight: 600, color: k.co, marginBottom: 4}}, k.nm),
+          s('div', {style: {fontSize: 11, color: k.co}}, k.ds)
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.render(React.createElement(App), document.getElementById('root'));
+</script>
+</body>
+</html>
