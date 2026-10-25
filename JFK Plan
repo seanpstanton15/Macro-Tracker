@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JFK 50 Mile — 4-Week Recovery & Prep Plan</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f4;
+    --text-primary: #1c1917;
+    --text-secondary: #78716c;
+    --border: #e7e5e4;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1c1917;
+      --bg-secondary: #292524;
+      --text-primary: #fafaf9;
+      --text-secondary: #a8a29e;
+      --border: #44403c;
+    }
+  }
+  body { font-family: var(--font); background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; padding: 24px 16px; }
+  main { max-width: 900px; margin: 0 auto; }
+  .eyebrow { font-size: 11px; color: var(--text-secondary); margin-bottom: 3px; letter-spacing: .06em; text-transform: uppercase; }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 20px; }
+  h2 { font-size: 13px; font-weight: 600; margin: 24px 0 8px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
+  .card { background: var(--bg-secondary); border-radius: 8px; padding: 8px 10px; }
+  .card .lb { font-size: 10px; color: var(--text-secondary); margin-bottom: 2px; }
+  .card .val { font-size: 15px; font-weight: 500; }
+  .note { padding: 8px 12px; border-radius: 8px; font-size: 12px; margin-bottom: 14px; border: 1px solid; }
+  .course { display: grid; grid-template-columns: 2.5fr 13fr 26fr 8.7fr; gap: 3px; margin-bottom: 6px; }
+  .seg { border-radius: 6px; padding: 7px 8px; font-size: 10px; line-height: 1.3; }
+  .seg b { display: block; font-size: 11px; }
+  .bars { display: flex; align-items: flex-end; gap: 10px; height: 80px; margin-bottom: 20px; }
+  .bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: 10px; color: var(--text-secondary); }
+  .bar div { width: 100%; border-radius: 3px; margin: 3px 0; }
+  .week { border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
+  .week.current { border: 2px solid var(--wk); }
+  .whead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px; }
+  .whead .t { font-weight: 600; font-size: 15px; }
+  .whead .d { font-size: 12px; color: var(--text-secondary); margin-left: 8px; }
+  .whead .mi { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+  .pill { font-size: 10px; padding: 2px 7px; border-radius: 6px; margin-left: 6px; }
+  .wdesc { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .day { border-radius: 8px; border: 1px solid var(--border); padding: 8px 7px; background: var(--bg-secondary); }
+  .day.key { border: 2px solid #185FA5; }
+  .day.race { border: 2px solid #A32D2D; background: #FCEBEB; color: #A32D2D; }
+  .dtop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; gap: 3px; }
+  .dn { font-size: 10px; font-weight: 600; color: var(--text-secondary); }
+  .tag { font-size: 9px; padding: 1px 5px; border-radius: 5px; white-space: nowrap; }
+  .dx { font-size: 11px; font-weight: 500; line-height: 1.35; margin-bottom: 5px; }
+  .dp { font-size: 10px; color: var(--text-secondary); line-height: 1.3; }
+  .race .dp { color: #A32D2D; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+  .grid2 .card { padding: 10px 12px; }
+  .grid2 .ttl { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .grid2 p { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+  .lesson { background: #FAECE7; border: 1px solid #993C1D; color: #993C1D; border-radius: 8px; padding: 10px 12px; font-size: 12px; line-height: 1.45; }
+  .foot { font-size: 10px; color: var(--text-secondary); margin-top: 24px; }
+  .easy{background:#E1F5EE;color:#0F6E56} .rest{background:#F1EFE8;color:#888780} .bike{background:#F1EFE8;color:#5F5E5A}
+  .trail{background:#FAEEDA;color:#854F0B} .long{background:#E6F1FB;color:#185FA5} .hike{background:#EEEDFE;color:#534AB7}
+  .racet{background:#FCEBEB;color:#A32D2D}
+  @media (max-width: 700px) { .days { grid-template-columns: repeat(2, 1fr); } .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">JFK 50 Mile · Sat Nov 21, 2026 · 6:30 AM · Boonsboro, MD</div>
+  <h1>4-Week Recovery &amp; Prep Plan</h1>
+  <div class="sub">Built the day of MCM (3:19). Goal: finish. 13-hour limit. The marathon block is the fitness — these weeks are for recovery, trail specificity, fueling rehearsal, and arriving fresh.</div>
+
+  <div class="stats">
+    <div class="card"><div class="lb">MCM result</div><div class="val">3:19</div></div>
+    <div class="card"><div class="lb">Days to JFK</div><div class="val" id="days">27</div></div>
+    <div class="card"><div class="lb">Distance</div><div class="val">50.2 mi</div></div>
+    <div class="card"><div class="lb">Rough estimate</div><div class="val">9–11 hrs</div></div>
+  </div>
+
+  <h2>The course</h2>
+  <div class="course">
+    <div class="seg easy"><b>Road</b>~2.5 mi climb</div>
+    <div class="seg trail"><b>Appalachian Trail</b>~13 mi rocky single track · Weverton switchbacks</div>
+    <div class="seg long"><b>C&amp;O Canal Towpath</b>~26 mi flat — run/walk</div>
+    <div class="seg hike"><b>Roads</b>~8.4 mi rolling to Williamsport</div>
+  </div>
+  <div class="sub" style="margin-bottom:20px">Typical race day: low ~31°F, high ~54°F · Sunrise ~7:01 AM, sunset ~4:51 PM · No headphones allowed.</div>
+
+  <h2>Weekly mileage</h2>
+  <div class="bars">
+    <div class="bar">~12 mi<div style="height:20%;background:#1D9E75"></div>Wk 1</div>
+    <div class="bar">~32 mi<div style="height:91%;background:#378ADD"></div>Wk 2</div>
+    <div class="bar">~29 mi<div style="height:83%;background:#BA7517"></div>Wk 3</div>
+    <div class="bar">~11 mi + race<div style="height:30%;background:#A32D2D"></div>Wk 4</div>
+  </div>
+
+  <h2>Gates — apply every week</h2>
+  <div class="note" style="background:#E1F5EE;border-color:#1D9E75;color:#0F6E56">
+    <b>Achilles 24-hour rule</b> is the main gate: worse the morning after → swap the next run for a ride or rest. Resume Alfredson heel drops ~day 3–4 post-MCM. Hold the Week 2 long run until Oura readiness/HRV are near baseline and stairs feel normal. Missing a run costs nothing; showing up hurt costs the race.
+  </div>
+
+  <section class="week" data-start="2026-10-26" style="--wk:#1D9E75">
+    <div class="whead"><div><span class="t">Week 1</span><span class="d">Oct 26 – Nov 1</span><span class="pill easy">Recover</span></div><span class="mi">~10–15 mi</span></div>
+    <div class="wdesc">No intensity. Sleep, protein (~0.7–0.8 g/lb/day), normal carbs.</div>
+    <div class="days">
+      <div class="day"><div class="dtop"><span class="dn">Mon</span><span class="tag rest">Rest</span></div><div class="dx">Rest · 20–30 min walk</div><div class="dp">—</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Tue</span><span class="tag bike">Bike</span></div><div class="dx">30–45 min spin or walk</div><div class="dp">Z1</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Wed</span><span class="tag bike">Bike</span></div><div class="dx">30–45 min spin or walk</div><div class="dp">Z1</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Thu</span><span class="tag easy">Easy</span></div><div class="dx">3 mi very easy</div><div class="dp">Only if stairs normal + Achilles clean. Else spin.</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Fri</span><span class="tag rest">Rest</span></div><div class="dx">Rest or easy spin</div><div class="dp">—</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Sat</span><span class="tag easy">Easy</span></div><div class="dx">4–5 mi easy</div><div class="dp">9:00+/mi</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Sun</span><span class="tag bike">Bike</span></div><div class="dx">60–75 min ride or 5 mi easy</div><div class="dp">Easy</div></div>
+    </div>
+  </section>
+
+  <section class="week" data-start="2026-11-02" style="--wk:#378ADD">
+    <div class="whead"><div><span class="t">Week 2</span><span class="d">Nov 2 – 8</span><span class="pill long">Rebuild + rehearse</span></div><span class="mi">~30–35 mi</span></div>
+    <div class="wdesc">Light strength 2×/week: glutes, hip flexors, single-leg step-downs, calf raises.</div>
+    <div class="days">
+      <div class="day"><div class="dtop"><span class="dn">Mon</span><span class="tag rest">Rest</span></div><div class="dx">Rest</div><div class="dp">—</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Tue</span><span class="tag easy">Easy</span></div><div class="dx">5 mi easy</div><div class="dp">8:45–9:15/mi</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Wed</span><span class="tag hike">Hike</span></div><div class="dx">6 mi easy + 6×2 min power hike</div><div class="dp">Steep grade, hands on quads</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Thu</span><span class="tag trail">Trail</span></div><div class="dx">5 mi easy</div><div class="dp">Trail if possible</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Fri</span><span class="tag rest">Rest</span></div><div class="dx">Rest</div><div class="dp">—</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Sat</span><span class="tag easy">Easy</span></div><div class="dx">4 mi easy or 60 min spin</div><div class="dp">Easy</div></div>
+      <div class="day key"><div class="dtop"><span class="dn">Sun</span><span class="tag long">KEY</span></div><div class="dx">2.5–3 hr run/hike, ~13–16 mi rocky trail</div><div class="dp">AT Gathland→Weverton or Billy Goat A. Full dress rehearsal: vest, shoes, 30-min fuel alarm, real food.</div></div>
+    </div>
+  </section>
+
+  <section class="week" data-start="2026-11-09" style="--wk:#BA7517">
+    <div class="whead"><div><span class="t">Week 3</span><span class="d">Nov 9 – 15</span><span class="pill trail">Consolidate</span></div><span class="mi">~28–30 mi</span></div>
+    <div class="wdesc">Last strength session by ~Nov 12.</div>
+    <div class="days">
+      <div class="day"><div class="dtop"><span class="dn">Mon</span><span class="tag rest">Rest</span></div><div class="dx">Rest</div><div class="dp">—</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Tue</span><span class="tag easy">Easy</span></div><div class="dx">6 mi easy + 4×20s strides</div><div class="dp">8:45–9:15/mi</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Wed</span><span class="tag trail">Trail</span></div><div class="dx">7 mi easy, some trail</div><div class="dp">8:45–9:15/mi</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Thu</span><span class="tag easy">Easy</span></div><div class="dx">5 mi easy</div><div class="dp">8:45–9:15/mi</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Fri</span><span class="tag rest">Rest</span></div><div class="dx">Rest</div><div class="dp">—</div></div>
+      <div class="day key"><div class="dtop"><span class="dn">Sat</span><span class="tag long">Towpath</span></div><div class="dx">10 mi run/walk rehearsal</div><div class="dp">25 min run / 5 min walk · ~10:00–10:30 run pace · fuel every 30 min</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Sun</span><span class="tag easy">Easy</span></div><div class="dx">4–5 mi easy or easy ride</div><div class="dp">Easy</div></div>
+    </div>
+  </section>
+
+  <section class="week" data-start="2026-11-16" style="--wk:#A32D2D">
+    <div class="whead"><div><span class="t">Week 4</span><span class="d">Nov 16 – 21</span><span class="pill racet">Race week</span></div><span class="mi">~10 mi + race</span></div>
+    <div class="wdesc">Stay off your feet. Pack vest and drop bags early in the week.</div>
+    <div class="days">
+      <div class="day"><div class="dtop"><span class="dn">Mon</span><span class="tag easy">Easy</span></div><div class="dx">4 mi easy</div><div class="dp">8:45–9:15/mi</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Tue</span><span class="tag easy">Easy</span></div><div class="dx">4 mi easy + 4 strides</div><div class="dp">8:45–9:15/mi</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Wed</span><span class="tag easy">Easy</span></div><div class="dx">3 mi easy</div><div class="dp">Very easy</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Thu</span><span class="tag rest">Rest</span></div><div class="dx">Rest or 2–3 mi shakeout</div><div class="dp">—</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Fri</span><span class="tag rest">Rest</span></div><div class="dx">Rest · packet pickup · early bed</div><div class="dp">—</div></div>
+      <div class="day race"><div class="dtop"><span class="dn">Sat</span><span class="tag racet">Race Day</span></div><div class="dx">🏁 JFK 50 Mile</div><div class="dp">6:30 AM · line closes 6:35</div></div>
+      <div class="day"><div class="dtop"><span class="dn">Sun</span><span class="tag rest">Rest</span></div><div class="dx">Recover</div><div class="dp">—</div></div>
+    </div>
+  </section>
+
+  <h2>Race-day strategy</h2>
+  <div class="grid2">
+    <div class="card"><div class="ttl" style="color:#854F0B">Start embarrassingly slow</div><p>Hike the road climb and every AT climb. Weverton switchbacks carefully — quads and Achilles. Nobody wins JFK on the AT; plenty lose it there.</p></div>
+    <div class="card"><div class="ttl" style="color:#185FA5">Towpath run/walk</div><p>Run/walk from the start: 25 min run / 5 min walk at ~10:00–10:30/mi run pace. Conversational the whole way.</p></div>
+    <div class="card"><div class="ttl" style="color:#0F6E56">Fuel every 30 min</div><p>60–80g carbs/hr from the gun, no exceptions. Alternate Maurten with real food (PB&amp;J, Uncrustables, potatoes, broth late). Garmin 30-min alert.</p></div>
+    <div class="card"><div class="ttl" style="color:#534AB7">Carry your water</div><p>Bottle or soft flask always. Aid stations are refills, not the plan. ~16–24 oz/hr in cool weather. Salt only with water.</p></div>
+    <div class="card"><div class="ttl" style="color:#5F5E5A">Layers &amp; light</div><p>Cold start (~31°F) — layers you can stash. ~10-hr finish lands near sunset (~4:51 PM): headlamp or light in a drop bag.</p></div>
+  </div>
+
+  <h2>The MCM lesson</h2>
+  <div class="lesson">3:19 at MCM: half split ~1:36 (within a minute of the half PR), last gel at mile 16, ~80 min with no carbs, no water cups miles ~20–22, wall at 22. Pace discipline + fuel every 30 min to the very end + carry your own fluid. Apply all three at JFK.</div>
+
+  <div class="foot">Check official cutoffs and aid-station locations at jfk50mile.org. Generated Oct 25, 2026.</div>
+</main>
+<script>
+  // Highlight current week and update the countdown (content is static HTML; this only decorates).
+  (function () {
+    var today = new Date(); today.setHours(0,0,0,0);
+    var race = new Date(2026, 10, 21);
+    var d = Math.round((race - today) / 86400000);
+    var el = document.getElementById('days');
+    if (el) el.textContent = d > 0 ? d : (d === 0 ? 'Race day' : 'Done');
+    var weeks = document.querySelectorAll('.week');
+    weeks.forEach(function (w) {
+      var p = w.dataset.start.split('-');
+      var s = new Date(+p[0], +p[1] - 1, +p[2]);
+      var e = new Date(s); e.setDate(e.getDate() + 7);
+      if (today >= s && today < e) w.classList.add('current');
+    });
+  })();
+</script>
+</body>
+</html>
